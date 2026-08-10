@@ -31,13 +31,15 @@ class TimerTab extends StatefulWidget {
   State<TimerTab> createState() => _TimerTabState();
 }
 
-class _TimerTabState extends State<TimerTab> {
+class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
   static const _channel = MethodChannel(AppConstants.blockerMethodChannel);
 
   int _secondsLeft = 25 * 60;
   bool _hasNotifiedEnd = false;
   Timer? _timer;
   String _currentStage = 'Flow';
+  DateTime? _targetEndTime;
+  DateTime? _lastTickTime;
 
   late bool _isAppBlockerEnabled;
   late List<AppInfo> _appsToBlock;
@@ -54,6 +56,7 @@ class _TimerTabState extends State<TimerTab> {
     super.initState();
     _isAppBlockerEnabled = widget.settings.defaultAppBlockerEnabled;
     _appsToBlock = List.from(AppConstants.defaultAppsToBlock);
+    WidgetsBinding.instance.addObserver(this);
     _loadInstalledApps();
     _resetTimerForTask();
   }
@@ -100,6 +103,17 @@ class _TimerTabState extends State<TimerTab> {
         _updateNativeAppBlocker(false);
         _stopAmbientSound();
       }
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && widget.isTimerRunning && _targetEndTime != null) {
+      setState(() {
+        _secondsLeft = _targetEndTime!.difference(DateTime.now()).inSeconds;
+      });
+    } else if (state == AppLifecycleState.paused && widget.isTimerRunning) {
+      _targetEndTime = DateTime.now().add(Duration(seconds: _secondsLeft));
     }
   }
 
@@ -279,14 +293,25 @@ class _TimerTabState extends State<TimerTab> {
     _updateNativeAppBlocker(true);
     _playAmbientSound();
 
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() {
-        _secondsLeft--;
-        if (widget.activeTask != null) {
-          widget.activeTask!.timeSpentSeconds++;
-        }
+    _targetEndTime = DateTime.now().add(Duration(seconds: _secondsLeft));
+    _lastTickTime = DateTime.now();
 
-        if (_secondsLeft == 0 && !_hasNotifiedEnd) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      
+      final now = DateTime.now();
+      setState(() {
+        _secondsLeft = _targetEndTime!.difference(now).inSeconds;
+        
+        if (widget.activeTask != null) {
+          final elapsedSinceLastTick = now.difference(_lastTickTime!).inSeconds;
+          if (elapsedSinceLastTick > 0) {
+            widget.activeTask!.timeSpentSeconds += elapsedSinceLastTick;
+          }
+        }
+        _lastTickTime = now;
+
+        if (_secondsLeft <= 0 && !_hasNotifiedEnd) {
           _hasNotifiedEnd = true;
           if (widget.settings.hapticFeedbackEnabled) {
             HapticFeedback.heavyImpact();
@@ -302,6 +327,7 @@ class _TimerTabState extends State<TimerTab> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     _updateNativeAppBlocker(false);
     _stopAmbientSound();

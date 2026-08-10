@@ -68,4 +68,9 @@ class MainActivity : FlutterActivity() {
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        AppBlockerService.isBlockingActive = false
+    }
 }
