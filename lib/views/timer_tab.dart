@@ -46,9 +46,13 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
 
   final AudioPlayer _audioPlayer = AudioPlayer();
   String _selectedSound = 'None';
+  double _soundVolume = 0.7;
+  double _preMuteVolume = 0.7;
 
   static const Map<String, String> _soundAssets = {
-    'Peaceful Tabla': 'sounds/tabla_focus.wav',
+    'Heavy Pouring Rain': 'sounds/rain.wav',
+    'Water Drops': 'sounds/water_drops.wav',
+    'Forest Wind': 'sounds/wind.wav',
   };
 
   @override
@@ -85,9 +89,6 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     }
   }
 
-  void _showConfigureAppsModal() {
-    // This is removed, we will embed the list in a sub-tab instead.
-  }
 
   @override
   void didUpdateWidget(covariant TimerTab oldWidget) {
@@ -120,6 +121,7 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
   Future<void> _playAmbientSound() async {
     if (_selectedSound != 'None' && _soundAssets.containsKey(_selectedSound)) {
       try {
+        await _audioPlayer.setVolume(_soundVolume);
         await _audioPlayer.setReleaseMode(ReleaseMode.loop);
         await _audioPlayer.play(AssetSource(_soundAssets[_selectedSound]!));
       } catch (e) {
@@ -136,6 +138,18 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     } catch (e) {
       debugPrint('Error stopping sound: $e');
     }
+  }
+
+  void _toggleMute() {
+    setState(() {
+      if (_soundVolume > 0) {
+        _preMuteVolume = _soundVolume;
+        _soundVolume = 0.0;
+      } else {
+        _soundVolume = _preMuteVolume > 0 ? _preMuteVolume : 0.7;
+      }
+    });
+    _audioPlayer.setVolume(_soundVolume);
   }
 
   void _resetTimerForTask() {
@@ -568,9 +582,9 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
                       ),
                       const SizedBox(height: 20),
 
-                      // Ambient Sound Selector
+                      // Ambient Sound Selector Card with Volume Slider
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: isDark ? AppConstants.darkSurface : AppConstants.lightSurface,
                           borderRadius: BorderRadius.circular(16),
@@ -579,41 +593,120 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
                                 ? AppConstants.primaryIndigo.withOpacity(0.5)
                                 : Colors.transparent,
                           ),
+                          boxShadow: isDark
+                              ? []
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.04),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  )
+                                ],
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
-                              children: const [
-                                Icon(Icons.graphic_eq, color: AppConstants.primaryIndigo, size: 20),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Ambient Focus Sound',
-                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: const [
+                                    Icon(Icons.graphic_eq, color: AppConstants.primaryIndigo, size: 20),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Ambient Focus Sound',
+                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                                DropdownButton<String>(
+                                  value: _selectedSound,
+                                  underline: const SizedBox(),
+                                  isDense: true,
+                                  items: const [
+                                    DropdownMenuItem(value: 'None', child: Text('🔇 None')),
+                                    DropdownMenuItem(value: 'Heavy Pouring Rain', child: Text('🌧️ Heavy Pouring Rain')),
+                                    DropdownMenuItem(value: 'Water Drops', child: Text('💧 Water Drops')),
+                                    DropdownMenuItem(value: 'Forest Wind', child: Text('🌬️ Forest Wind')),
+                                  ],
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      setState(() {
+                                        _selectedSound = val;
+                                      });
+                                      if (widget.isTimerRunning) {
+                                        _playAmbientSound();
+                                      } else {
+                                        _stopAmbientSound();
+                                      }
+                                    }
+                                  },
                                 ),
                               ],
                             ),
-                            DropdownButton<String>(
-                              value: _selectedSound,
-                              underline: const SizedBox(),
-                              isDense: true,
-                              items: const [
-                                DropdownMenuItem(value: 'None', child: Text('🔇 None')),
-                                DropdownMenuItem(value: 'Peaceful Tabla', child: Text('🪘 Peaceful Tabla Rhythms')),
-                              ],
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setState(() {
-                                    _selectedSound = val;
-                                  });
-                                  if (widget.isTimerRunning) {
-                                    _playAmbientSound();
-                                  } else {
-                                    _stopAmbientSound();
-                                  }
-                                }
-                              },
-                            ),
+                            if (_selectedSound != 'None') ...[
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: isDark ? Colors.black26 : Colors.black.withOpacity(0.03),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(
+                                        _soundVolume == 0
+                                            ? Icons.volume_off
+                                            : (_soundVolume < 0.5 ? Icons.volume_down : Icons.volume_up),
+                                        size: 20,
+                                        color: _soundVolume == 0 ? AppConstants.errorRed : AppConstants.primaryIndigo,
+                                      ),
+                                      tooltip: _soundVolume == 0 ? 'Unmute' : 'Mute',
+                                      onPressed: _toggleMute,
+                                    ),
+                                    Expanded(
+                                      child: SliderTheme(
+                                        data: SliderTheme.of(context).copyWith(
+                                          trackHeight: 6,
+                                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+                                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                                          activeTrackColor: AppConstants.primaryIndigo,
+                                          inactiveTrackColor: isDark ? Colors.white12 : Colors.black12,
+                                          thumbColor: AppConstants.primaryIndigo,
+                                        ),
+                                        child: Slider(
+                                          value: _soundVolume,
+                                          min: 0.0,
+                                          max: 1.0,
+                                          onChanged: (newVol) {
+                                            setState(() {
+                                              _soundVolume = newVol;
+                                              if (newVol > 0) {
+                                                _preMuteVolume = newVol;
+                                              }
+                                            });
+                                            _audioPlayer.setVolume(newVol);
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 44,
+                                      alignment: Alignment.centerRight,
+                                      child: Text(
+                                        _soundVolume == 0 ? 'Muted' : '${(_soundVolume * 100).round()}%',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: _soundVolume == 0 ? AppConstants.errorRed : Colors.grey,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ]
                           ],
                         ),
                       ),
