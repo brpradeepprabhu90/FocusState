@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import '../constants/app_constants.dart';
 import '../models/app_info.dart';
 import '../models/app_settings.dart';
@@ -36,10 +38,10 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
 
   int _secondsLeft = 25 * 60;
   bool _hasNotifiedEnd = false;
-  Timer? _timer;
   String _currentStage = 'Flow';
-  DateTime? _targetEndTime;
   DateTime? _lastTickTime;
+  StreamSubscription<Map<String, dynamic>?>? _serviceSubscription;
+  StreamSubscription<Map<String, dynamic>?>? _completionSubscription;
 
   late bool _isAppBlockerEnabled;
   late List<AppInfo> _appsToBlock;
@@ -62,7 +64,80 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     _appsToBlock = List.from(AppConstants.defaultAppsToBlock);
     WidgetsBinding.instance.addObserver(this);
     _loadInstalledApps();
-    _resetTimerForTask();
+    
+    _serviceSubscription = FlutterBackgroundService().on('update').listen((event) {
+      if (!mounted || event == null) return;
+      setState(() {
+        _secondsLeft = event['secondsLeft'] ?? _secondsLeft;
+        _hasNotifiedEnd = event['hasNotifiedCompletion'] ?? false;
+        if (widget.activeTask != null && widget.isTimerRunning) {
+          final now = DateTime.now();
+          if (_lastTickTime != null) {
+            final elapsedSinceLastTick = now.difference(_lastTickTime!).inSeconds;
+            if (elapsedSinceLastTick > 0 && elapsedSinceLastTick < 5) {
+               widget.activeTask!.timeSpentSeconds += elapsedSinceLastTick;
+            }
+          }
+          _lastTickTime = now;
+        }
+      });
+    });
+
+    _completionSubscription = FlutterBackgroundService().on('timerCompleted').listen((event) {
+      if (!mounted) return;
+      if (widget.settings.hapticFeedbackEnabled) {
+        HapticFeedback.heavyImpact();
+      }
+      if (widget.activeTask != null) {
+        widget.activeTask!.completedPomodoros++;
+      }
+      _triggerCompletionNotification();
+    });
+
+    _restorePersistedTimer();
+  }
+
+  Future<void> _saveTimerState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_timer_running', widget.isTimerRunning);
+      await prefs.setInt('seconds_left', _secondsLeft);
+    } catch (e) {
+      debugPrint('Error saving timer state: $e');
+    }
+  }
+
+  Future<void> _clearTimerState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_timer_running', false);
+      await prefs.remove('seconds_left');
+    } catch (e) {
+      debugPrint('Error clearing timer state: $e');
+    }
+  }
+
+  Future<void> _restorePersistedTimer() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final bool wasRunning = prefs.getBool('is_timer_running') ?? false;
+
+      if (wasRunning) {
+        // Assume background service might still be running it. Just sync from it.
+        if (mounted) {
+          if (!widget.isTimerRunning) {
+            widget.onResumeTimer();
+          } else {
+            _startTimer();
+          }
+        }
+      } else {
+        _resetTimerForTask();
+      }
+    } catch (e) {
+      debugPrint('Error restoring timer: $e');
+      _resetTimerForTask();
+    }
   }
 
   Future<void> _loadInstalledApps() async {
@@ -73,7 +148,6 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
           _appsToBlock = apps.map((app) {
             final String pkg = app['packageName'] as String;
             final String name = app['name'] as String;
-            // See if it's in our default list to inherit block state, else default to blocked
             final defaultApp = AppConstants.defaultAppsToBlock.where((a) => a.packageName == pkg).firstOrNull;
             return AppInfo(
               name: name,
@@ -89,7 +163,6 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     }
   }
 
-
   @override
   void didUpdateWidget(covariant TimerTab oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -100,7 +173,8 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
       if (widget.isTimerRunning) {
         _startTimer();
       } else {
-        _timer?.cancel();
+        FlutterBackgroundService().invoke('pauseTimer');
+        _clearTimerState();
         _updateNativeAppBlocker(false);
         _stopAmbientSound();
       }
@@ -109,12 +183,10 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && widget.isTimerRunning && _targetEndTime != null) {
-      setState(() {
-        _secondsLeft = _targetEndTime!.difference(DateTime.now()).inSeconds;
-      });
+    if (state == AppLifecycleState.resumed && widget.isTimerRunning) {
+      _updateNativeAppBlocker(true);
     } else if (state == AppLifecycleState.paused && widget.isTimerRunning) {
-      _targetEndTime = DateTime.now().add(Duration(seconds: _secondsLeft));
+      _saveTimerState();
     }
   }
 
@@ -153,7 +225,7 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
   }
 
   void _resetTimerForTask() {
-    _timer?.cancel();
+    FlutterBackgroundService().invoke('pauseTimer');
     _hasNotifiedEnd = false;
 
     if (widget.activeTask != null) {
@@ -303,47 +375,29 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
   }
 
   void _startTimer() {
-    _timer?.cancel();
     _updateNativeAppBlocker(true);
     _playAmbientSound();
 
-    _targetEndTime = DateTime.now().add(Duration(seconds: _secondsLeft));
     _lastTickTime = DateTime.now();
+    
+    // Save state for persistence
+    _saveTimerState();
 
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return;
-      
-      final now = DateTime.now();
-      setState(() {
-        _secondsLeft = _targetEndTime!.difference(now).inSeconds;
-        
-        if (widget.activeTask != null) {
-          final elapsedSinceLastTick = now.difference(_lastTickTime!).inSeconds;
-          if (elapsedSinceLastTick > 0) {
-            widget.activeTask!.timeSpentSeconds += elapsedSinceLastTick;
-          }
-        }
-        _lastTickTime = now;
-
-        if (_secondsLeft <= 0 && !_hasNotifiedEnd) {
-          _hasNotifiedEnd = true;
-          if (widget.settings.hapticFeedbackEnabled) {
-            HapticFeedback.heavyImpact();
-          }
-          if (widget.activeTask != null) {
-            widget.activeTask!.completedPomodoros++;
-          }
-          _triggerCompletionNotification();
-        }
-      });
+    FlutterBackgroundService().startService();
+    FlutterBackgroundService().invoke('startTimer', {
+      'secondsLeft': _secondsLeft,
+      'taskTitle': widget.activeTask?.title ?? "Focus Session",
+      'estimatedPomodoros': widget.activeTask?.estimatedPomodoros ?? 1,
+      'completedPomodoros': widget.activeTask?.completedPomodoros ?? 0,
     });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _timer?.cancel();
-    _updateNativeAppBlocker(false);
+    _serviceSubscription?.cancel();
+    _completionSubscription?.cancel();
+    // Do NOT stop native app blocker here so focus blocking persists across tab switches and app backgrounding
     _stopAmbientSound();
     _audioPlayer.dispose();
     super.dispose();

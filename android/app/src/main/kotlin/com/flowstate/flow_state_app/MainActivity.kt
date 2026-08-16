@@ -19,11 +19,18 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 "startBlocking" -> {
                     val packages = call.argument<List<String>>("packages") ?: emptyList()
+                    val prefs = getSharedPreferences("com.flowstate.app_blocker", Context.MODE_PRIVATE)
+                    prefs.edit()
+                        .putBoolean("is_blocking_active", true)
+                        .putStringSet("blocked_packages", packages.toSet())
+                        .apply()
                     AppBlockerService.isBlockingActive = true
                     AppBlockerService.blockedPackages = packages.toSet()
                     result.success(true)
                 }
                 "stopBlocking" -> {
+                    val prefs = getSharedPreferences("com.flowstate.app_blocker", Context.MODE_PRIVATE)
+                    prefs.edit().putBoolean("is_blocking_active", false).apply()
                     AppBlockerService.isBlockingActive = false
                     result.success(true)
                 }
@@ -71,6 +78,6 @@ class MainActivity : FlutterActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        AppBlockerService.isBlockingActive = false
+        // Do NOT disable blocking on activity destroy so focus mode persists when app is swiped away
     }
 }

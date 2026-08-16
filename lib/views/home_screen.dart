@@ -133,9 +133,9 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
               ),
             ],
           ),
-          body: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: screens[_controller.selectedTabIndex],
+          body: IndexedStack(
+            index: _controller.selectedTabIndex,
+            children: screens,
           ),
           bottomNavigationBar: NavigationBar(
             selectedIndex: _controller.selectedTabIndex,
