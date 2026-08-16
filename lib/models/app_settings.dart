@@ -3,16 +3,11 @@ class AppSettings {
   bool defaultAppBlockerEnabled;
   bool hapticFeedbackEnabled;
   bool notificationsEnabled;
-  String? youtubeUrl;
-  List<String> savedYoutubeUrls;
-
   AppSettings({
     this.defaultPomodoroMinutes = 25,
     this.defaultAppBlockerEnabled = true,
     this.hapticFeedbackEnabled = true,
     this.notificationsEnabled = true,
-    this.youtubeUrl = 'https://www.youtube.com/watch?v=tgneSmdEM2c',
-    this.savedYoutubeUrls = const ['https://www.youtube.com/watch?v=tgneSmdEM2c'],
   });
 
   factory AppSettings.fromJson(Map<String, dynamic> json) {
@@ -21,8 +16,6 @@ class AppSettings {
       defaultAppBlockerEnabled: json['defaultAppBlockerEnabled'] ?? true,
       hapticFeedbackEnabled: json['hapticFeedbackEnabled'] ?? true,
       notificationsEnabled: json['notificationsEnabled'] ?? true,
-      youtubeUrl: json['youtubeUrl'],
-      savedYoutubeUrls: json['savedYoutubeUrls'] != null ? List<String>.from(json['savedYoutubeUrls']) : [],
     );
   }
 
@@ -32,8 +25,6 @@ class AppSettings {
       'defaultAppBlockerEnabled': defaultAppBlockerEnabled,
       'hapticFeedbackEnabled': hapticFeedbackEnabled,
       'notificationsEnabled': notificationsEnabled,
-      'youtubeUrl': youtubeUrl,
-      'savedYoutubeUrls': savedYoutubeUrls,
     };
   }
 }

@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import '../constants/app_constants.dart';
 import '../models/app_info.dart';
 import '../models/app_settings.dart';
@@ -53,18 +52,15 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
   late List<AppInfo> _appsToBlock;
 
   final AudioPlayer _audioPlayer = AudioPlayer();
-  final YoutubeExplode _yt = YoutubeExplode();
-  final TextEditingController _ytController = TextEditingController();
-  String _selectedYtOption = 'New URL';
 
   String _selectedSound = 'None';
   double _soundVolume = 0.7;
   double _preMuteVolume = 0.7;
 
   static const Map<String, String> _soundAssets = {
-    'Heavy Pouring Rain': 'sounds/rain.wav',
-    'Water Drops': 'sounds/water_drops.wav',
-    'Forest Wind': 'sounds/wind.wav',
+    'Monsoon Breath': 'sounds/Monsoon_Breath.wav',
+    'Morning at the Ghat': 'sounds/Morning_at_the_Ghat.wav',
+    'The Breathing Tide': 'sounds/The_Breathing_Tide.wav',
   };
 
   @override
@@ -72,13 +68,6 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     super.initState();
     _isAppBlockerEnabled = widget.settings.defaultAppBlockerEnabled;
     _appsToBlock = List.from(AppConstants.defaultAppsToBlock);
-    
-    if (widget.settings.youtubeUrl != null && widget.settings.youtubeUrl!.isNotEmpty) {
-      _ytController.text = widget.settings.youtubeUrl!;
-      if (widget.settings.savedYoutubeUrls.contains(widget.settings.youtubeUrl!)) {
-        _selectedYtOption = widget.settings.youtubeUrl!;
-      }
-    }
 
     WidgetsBinding.instance.addObserver(this);
     _loadInstalledApps();
@@ -219,50 +208,8 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     }
   }
 
-  String _extractVideoId(String url) {
-    try {
-      final regExp = RegExp(r'(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})');
-      final match = regExp.firstMatch(url);
-      if (match != null) {
-        return match.group(1)!;
-      }
-    } catch (_) {}
-    return url;
-  }
-
   Future<void> _playAmbientSound() async {
-    if (_selectedSound == 'YouTube Link' && _ytController.text.isNotEmpty) {
-      try {
-        var cleanId = _extractVideoId(_ytController.text);
-        var videoId = VideoId(cleanId);
-        var manifest = await _yt.videos.streamsClient.getManifest(videoId);
-        
-        var audioStreams = manifest.audioOnly;
-        var mp4Streams = audioStreams.where((s) => s.audioCodec.toLowerCase().contains('mp4a'));
-        var streamInfo = mp4Streams.isNotEmpty 
-            ? mp4Streams.withHighestBitrate() 
-            : audioStreams.withHighestBitrate();
-        
-        
-        await _audioPlayer.setVolume(_soundVolume);
-        await _audioPlayer.play(UrlSource(streamInfo.url.toString()));
-        
-        // Save to settings globally
-        widget.settings.youtubeUrl = _ytController.text;
-        if (!widget.settings.savedYoutubeUrls.contains(_ytController.text)) {
-          widget.settings.savedYoutubeUrls.add(_ytController.text);
-          setState(() {
-            _selectedYtOption = _ytController.text;
-          });
-        }
-        widget.onSaveSettings();
-      } catch (e) {
-        debugPrint('Error playing YouTube sound: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not play YouTube audio: $e')),
-        );
-      }
-    } else if (_selectedSound != 'None' && _soundAssets.containsKey(_selectedSound)) {
+    if (_selectedSound != 'None' && _soundAssets.containsKey(_selectedSound)) {
       try {
         await _audioPlayer.setVolume(_soundVolume);
         await _audioPlayer.setReleaseMode(ReleaseMode.loop);
@@ -532,8 +479,6 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     _desktopTimer?.cancel();
     _stopAmbientSound();
     _audioPlayer.dispose();
-    _yt.close();
-    _ytController.dispose();
     super.dispose();
   }
 
@@ -812,10 +757,9 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
                                   isDense: true,
                                   items: const [
                                     DropdownMenuItem(value: 'None', child: Text('🔇 None')),
-                                    DropdownMenuItem(value: 'YouTube Link', child: Text('▶️ YouTube Focus Music')),
-                                    DropdownMenuItem(value: 'Heavy Pouring Rain', child: Text('🌧️ Heavy Pouring Rain')),
-                                    DropdownMenuItem(value: 'Water Drops', child: Text('💧 Water Drops')),
-                                    DropdownMenuItem(value: 'Forest Wind', child: Text('🌬️ Forest Wind')),
+                                    DropdownMenuItem(value: 'Monsoon Breath', child: Text('🌧️ Monsoon Breath')),
+                                    DropdownMenuItem(value: 'Morning at the Ghat', child: Text('🌅 Morning at the Ghat')),
+                                    DropdownMenuItem(value: 'The Breathing Tide', child: Text('🌊 The Breathing Tide')),
                                   ],
                                   onChanged: (val) {
                                     if (val != null) {
@@ -832,66 +776,6 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
                                 ),
                               ],
                             ),
-                            if (_selectedSound == 'YouTube Link') ...[
-                              const SizedBox(height: 12),
-                              if (widget.settings.savedYoutubeUrls.isNotEmpty) ...[
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  decoration: BoxDecoration(
-                                    color: isDark ? Colors.black26 : Colors.black.withOpacity(0.03),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: DropdownButton<String>(
-                                    value: _selectedYtOption,
-                                    isExpanded: true,
-                                    underline: const SizedBox(),
-                                    items: [
-                                      ...widget.settings.savedYoutubeUrls.map((url) => DropdownMenuItem(
-                                            value: url,
-                                            child: Text(url, overflow: TextOverflow.ellipsis),
-                                          )),
-                                      const DropdownMenuItem(value: 'New URL', child: Text('+ Add New URL', style: TextStyle(color: Colors.blue))),
-                                    ],
-                                    onChanged: (val) {
-                                      if (val != null) {
-                                        setState(() {
-                                          _selectedYtOption = val;
-                                          if (val != 'New URL') {
-                                            _ytController.text = val;
-                                            if (widget.isTimerRunning) {
-                                              _playAmbientSound();
-                                            }
-                                          } else {
-                                            _ytController.clear();
-                                          }
-                                        });
-                                      }
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                              ],
-                              if (_selectedYtOption == 'New URL' || widget.settings.savedYoutubeUrls.isEmpty)
-                                TextField(
-                                  controller: _ytController,
-                                  decoration: InputDecoration(
-                                    hintText: 'Paste YouTube URL here...',
-                                    prefixIcon: const Icon(Icons.link, color: Colors.redAccent),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    filled: true,
-                                    fillColor: isDark ? Colors.black26 : Colors.black.withOpacity(0.03),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  ),
-                                  onSubmitted: (val) {
-                                    if (widget.isTimerRunning) {
-                                      _playAmbientSound();
-                                    }
-                                  },
-                                ),
-                            ],
                             if (_selectedSound != 'None') ...[
                               const SizedBox(height: 12),
                               Container(
