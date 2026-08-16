@@ -279,6 +279,12 @@ class StatsProgressTab extends StatelessWidget {
                                             const Icon(Icons.format_list_numbered, size: 12, color: Colors.indigo),
                                             const SizedBox(width: 4),
                                             Text('${t.completedPomodoros}/${t.estimatedPomodoros}', style: const TextStyle(fontSize: 12)),
+                                            if (t.interruptedPomodoros > 0) ...[
+                                              const SizedBox(width: 8),
+                                              const Icon(Icons.warning_amber_rounded, size: 12, color: AppConstants.warningAmber),
+                                              const SizedBox(width: 4),
+                                              Text('${t.interruptedPomodoros}', style: const TextStyle(fontSize: 12, color: AppConstants.warningAmber)),
+                                            ],
                                             if (t.repeatFrequency != 'Never') ...[
                                               const SizedBox(width: 8),
                                               const Icon(Icons.repeat, size: 12, color: Colors.amber),
@@ -375,7 +381,17 @@ class StatsProgressTab extends StatelessWidget {
                   dense: true,
                   leading: const Icon(Icons.check_circle, color: AppConstants.accentEmerald, size: 20),
                   title: Text(t.title, style: const TextStyle(decoration: TextDecoration.lineThrough)),
-                  subtitle: Text('Pomodoros: ${t.completedPomodoros} / ${t.estimatedPomodoros}'),
+                  subtitle: Row(
+                    children: [
+                      Text('Pomodoros: ${t.completedPomodoros} / ${t.estimatedPomodoros}'),
+                      if (t.interruptedPomodoros > 0) ...[
+                        const SizedBox(width: 8),
+                        const Icon(Icons.warning_amber_rounded, size: 12, color: AppConstants.warningAmber),
+                        const SizedBox(width: 4),
+                        Text('Interrupted: ${t.interruptedPomodoros}', style: const TextStyle(fontSize: 12, color: AppConstants.warningAmber)),
+                      ],
+                    ],
+                  ),
                 ),
               ),
           ],

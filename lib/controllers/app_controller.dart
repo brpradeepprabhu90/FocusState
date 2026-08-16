@@ -5,75 +5,58 @@ import '../models/app_settings.dart';
 import '../models/project.dart';
 import '../models/task.dart';
 
+import '../services/storage_service.dart';
+
 class AppController extends ChangeNotifier {
   static const _channel = MethodChannel(AppConstants.blockerMethodChannel);
+  final StorageService _storageService = StorageService();
 
   AppSettings settings = AppSettings(
     defaultPomodoroMinutes: 25,
     defaultAppBlockerEnabled: true,
   );
 
-  final List<Project> projects = [
-    Project(id: 'p1', name: 'General Tasks', color: AppConstants.primaryIndigo),
-    Project(id: 'p2', name: 'Flutter Dev', color: AppConstants.accentEmerald),
-    Project(id: 'p3', name: 'UI/UX Design', color: AppConstants.warningAmber),
-  ];
-
-  late List<Task> tasks;
+  List<Project> projects = [];
+  List<Task> tasks = [];
 
   Task? activeTask;
   bool isTimerRunning = false;
   int selectedTabIndex = 0;
 
-  AppController() {
-    final now = DateTime.now();
-    tasks = [
-      Task(
-        id: '1',
-        projectId: 'p2',
-        title: 'Write Flutter App Architecture',
-        durationMinutes: 25,
-        reminderTime: '15:00',
-        repeatFrequency: 'Daily',
-        enableNotification: true,
-      ),
-      Task(
-        id: '2',
-        projectId: 'p3',
-        title: 'Design Pomodoro Flow Timer',
-        durationMinutes: 45,
-        reminderTime: '16:30',
-        repeatFrequency: 'Weekly',
-        enableNotification: true,
-      ),
-      Task(
-        id: '3',
-        projectId: 'p1',
-        title: 'Setup Environment & Tools',
-        durationMinutes: 30,
-        isCompleted: true,
-        completedAt: now,
-        timeSpentSeconds: 1800,
-      ),
-      Task(
-        id: '4',
-        projectId: 'p2',
-        title: 'Learn Dart Fundamentals',
-        durationMinutes: 60,
-        isCompleted: true,
-        completedAt: DateTime(now.year, now.month, now.day - 2),
-        timeSpentSeconds: 3600,
-      ),
-      Task(
-        id: '5',
-        projectId: 'p3',
-        title: 'User Interface Wireframing',
-        durationMinutes: 40,
-        isCompleted: true,
-        completedAt: DateTime(now.year, now.month - 1, 10),
-        timeSpentSeconds: 2400,
-      ),
-    ];
+  bool _isInitialized = false;
+  bool get isInitialized => _isInitialized;
+
+  AppController();
+
+  Future<void> init() async {
+    settings = await _storageService.loadSettings();
+    projects = await _storageService.loadProjects();
+    tasks = await _storageService.loadTasks();
+
+    if (projects.isEmpty) {
+      // Default projects if empty
+      projects = [
+        Project(id: 'p1', name: 'General Tasks', color: AppConstants.primaryIndigo),
+        Project(id: 'p2', name: 'Flutter Dev', color: AppConstants.accentEmerald),
+        Project(id: 'p3', name: 'UI/UX Design', color: AppConstants.warningAmber),
+      ];
+      await _storageService.saveProjects(projects);
+    }
+
+    _isInitialized = true;
+    notifyListeners();
+  }
+
+  Future<void> saveTasks() async {
+    await _storageService.saveTasks(tasks);
+  }
+
+  Future<void> saveProjects() async {
+    await _storageService.saveProjects(projects);
+  }
+
+  Future<void> saveSettings() async {
+    await _storageService.saveSettings(settings);
   }
 
   void setTabIndex(int index) {
@@ -83,6 +66,7 @@ class AppController extends ChangeNotifier {
 
   void updateSettings(AppSettings newSettings) {
     settings = newSettings;
+    saveSettings();
     notifyListeners();
   }
 
@@ -114,6 +98,7 @@ class AppController extends ChangeNotifier {
       activeTask = null;
       isTimerRunning = false;
     }
+    saveTasks();
     notifyListeners();
   }
 
@@ -125,11 +110,13 @@ class AppController extends ChangeNotifier {
 
   void addNewTask(Task newTask) {
     tasks.add(newTask);
+    saveTasks();
     notifyListeners();
   }
 
   void addNewProject(Project newProject) {
     projects.add(newProject);
+    saveProjects();
     notifyListeners();
   }
 

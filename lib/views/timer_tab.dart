@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import '../constants/app_constants.dart';
 import '../models/app_info.dart';
 import '../models/app_settings.dart';
@@ -17,6 +18,7 @@ class TimerTab extends StatefulWidget {
   final VoidCallback onResumeTimer;
   final VoidCallback onCompleteTask;
   final VoidCallback onSelectTaskPrompt;
+  final VoidCallback onSaveSettings;
 
   const TimerTab({
     Key? key,
@@ -27,6 +29,7 @@ class TimerTab extends StatefulWidget {
     required this.onResumeTimer,
     required this.onCompleteTask,
     required this.onSelectTaskPrompt,
+    required this.onSaveSettings,
   }) : super(key: key);
 
   @override
@@ -48,6 +51,10 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
   late List<AppInfo> _appsToBlock;
 
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final YoutubeExplode _yt = YoutubeExplode();
+  final TextEditingController _ytController = TextEditingController();
+  String _selectedYtOption = 'New URL';
+
   String _selectedSound = 'None';
   double _soundVolume = 0.7;
   double _preMuteVolume = 0.7;
@@ -63,6 +70,14 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     super.initState();
     _isAppBlockerEnabled = widget.settings.defaultAppBlockerEnabled;
     _appsToBlock = List.from(AppConstants.defaultAppsToBlock);
+    
+    if (widget.settings.youtubeUrl != null && widget.settings.youtubeUrl!.isNotEmpty) {
+      _ytController.text = widget.settings.youtubeUrl!;
+      if (widget.settings.savedYoutubeUrls.contains(widget.settings.youtubeUrl!)) {
+        _selectedYtOption = widget.settings.youtubeUrl!;
+      }
+    }
+
     WidgetsBinding.instance.addObserver(this);
     _loadInstalledApps();
     
@@ -197,7 +212,31 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
   }
 
   Future<void> _playAmbientSound() async {
-    if (_selectedSound != 'None' && _soundAssets.containsKey(_selectedSound)) {
+    if (_selectedSound == 'YouTube Link' && _ytController.text.isNotEmpty) {
+      try {
+        var videoId = VideoId(_ytController.text);
+        var manifest = await _yt.videos.streamsClient.getManifest(videoId);
+        var streamInfo = manifest.audioOnly.withHighestBitrate();
+        
+        await _audioPlayer.setVolume(_soundVolume);
+        await _audioPlayer.play(UrlSource(streamInfo.url.toString()));
+        
+        // Save to settings globally
+        widget.settings.youtubeUrl = _ytController.text;
+        if (!widget.settings.savedYoutubeUrls.contains(_ytController.text)) {
+          widget.settings.savedYoutubeUrls.add(_ytController.text);
+          setState(() {
+            _selectedYtOption = _ytController.text;
+          });
+        }
+        widget.onSaveSettings();
+      } catch (e) {
+        debugPrint('Error playing YouTube sound: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not play YouTube audio: $e')),
+        );
+      }
+    } else if (_selectedSound != 'None' && _soundAssets.containsKey(_selectedSound)) {
       try {
         await _audioPlayer.setVolume(_soundVolume);
         await _audioPlayer.setReleaseMode(ReleaseMode.loop);
@@ -246,8 +285,25 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     } else {
       setState(() {
         _secondsLeft = widget.settings.defaultPomodoroMinutes * 60;
+        _currentStage = 'Flow';
       });
+      if (widget.isTimerRunning) {
+        widget.onPauseTimer();
+      }
     }
+  }
+
+  void _stopTimer() {
+    if (widget.activeTask != null) {
+      final totalSeconds = widget.activeTask!.durationMinutes * 60;
+      if (_secondsLeft < totalSeconds && _secondsLeft > 0) {
+        widget.activeTask!.interruptedPomodoros++;
+      }
+    }
+    if (widget.isTimerRunning) {
+      widget.onPauseTimer();
+    }
+    _resetTimerForTask();
   }
 
   Future<void> _updateNativeAppBlocker(bool active) async {
@@ -409,9 +465,10 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _serviceSubscription?.cancel();
     _completionSubscription?.cancel();
-    // Do NOT stop native app blocker here so focus blocking persists across tab switches and app backgrounding
     _stopAmbientSound();
     _audioPlayer.dispose();
+    _yt.close();
+    _ytController.dispose();
     super.dispose();
   }
 
@@ -603,46 +660,45 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
                       ),
                       const SizedBox(height: 28),
 
-                      // Timer Explicit Controls: PLAY, PAUSE, STOP
+                      // Timer Explicit Controls: PLAY/PAUSE, STOP
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // PLAY / RESUME BUTTON
+                          // TOGGLE PLAY / PAUSE BUTTON
                           ElevatedButton.icon(
-                            icon: const Icon(Icons.play_arrow, size: 24),
-                            label: const Text('Play', style: TextStyle(fontSize: 15)),
+                            icon: Icon(
+                                widget.isTimerRunning ? Icons.pause : Icons.play_arrow,
+                                size: 24),
+                            label: Text(
+                                widget.isTimerRunning ? 'Pause' : 'Play',
+                                style: const TextStyle(fontSize: 15)),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppConstants.accentEmerald,
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                              backgroundColor: widget.isTimerRunning
+                                  ? AppConstants.warningAmber
+                                  : AppConstants.accentEmerald,
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                             ),
-                            onPressed: widget.isTimerRunning ? null : widget.onResumeTimer,
+                            onPressed: () {
+                              if (widget.isTimerRunning) {
+                                widget.onPauseTimer();
+                              } else {
+                                widget.onResumeTimer();
+                              }
+                            },
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 16),
 
-                          // PAUSE BUTTON
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.pause, size: 24),
-                            label: const Text('Pause', style: TextStyle(fontSize: 15)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppConstants.warningAmber,
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            ),
-                            onPressed: widget.isTimerRunning ? widget.onPauseTimer : null,
-                          ),
-                          const SizedBox(width: 12),
-
-                          // STOP / COMPLETE BUTTON
+                          // STOP BUTTON
                           ElevatedButton.icon(
                             icon: const Icon(Icons.stop, size: 24),
                             label: const Text('Stop', style: TextStyle(fontSize: 15)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppConstants.errorRed,
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                             ),
-                            onPressed: task != null ? widget.onCompleteTask : null,
+                            onPressed: _stopTimer,
                           ),
                         ],
                       ),
@@ -691,6 +747,7 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
                                   isDense: true,
                                   items: const [
                                     DropdownMenuItem(value: 'None', child: Text('🔇 None')),
+                                    DropdownMenuItem(value: 'YouTube Link', child: Text('▶️ YouTube Focus Music')),
                                     DropdownMenuItem(value: 'Heavy Pouring Rain', child: Text('🌧️ Heavy Pouring Rain')),
                                     DropdownMenuItem(value: 'Water Drops', child: Text('💧 Water Drops')),
                                     DropdownMenuItem(value: 'Forest Wind', child: Text('🌬️ Forest Wind')),
@@ -710,6 +767,66 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
                                 ),
                               ],
                             ),
+                            if (_selectedSound == 'YouTube Link') ...[
+                              const SizedBox(height: 12),
+                              if (widget.settings.savedYoutubeUrls.isNotEmpty) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? Colors.black26 : Colors.black.withOpacity(0.03),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: DropdownButton<String>(
+                                    value: _selectedYtOption,
+                                    isExpanded: true,
+                                    underline: const SizedBox(),
+                                    items: [
+                                      ...widget.settings.savedYoutubeUrls.map((url) => DropdownMenuItem(
+                                            value: url,
+                                            child: Text(url, overflow: TextOverflow.ellipsis),
+                                          )),
+                                      const DropdownMenuItem(value: 'New URL', child: Text('+ Add New URL', style: TextStyle(color: Colors.blue))),
+                                    ],
+                                    onChanged: (val) {
+                                      if (val != null) {
+                                        setState(() {
+                                          _selectedYtOption = val;
+                                          if (val != 'New URL') {
+                                            _ytController.text = val;
+                                            if (widget.isTimerRunning) {
+                                              _playAmbientSound();
+                                            }
+                                          } else {
+                                            _ytController.clear();
+                                          }
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                              if (_selectedYtOption == 'New URL' || widget.settings.savedYoutubeUrls.isEmpty)
+                                TextField(
+                                  controller: _ytController,
+                                  decoration: InputDecoration(
+                                    hintText: 'Paste YouTube URL here...',
+                                    prefixIcon: const Icon(Icons.link, color: Colors.redAccent),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    filled: true,
+                                    fillColor: isDark ? Colors.black26 : Colors.black.withOpacity(0.03),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  ),
+                                  onSubmitted: (val) {
+                                    if (widget.isTimerRunning) {
+                                      _playAmbientSound();
+                                    }
+                                  },
+                                ),
+                            ],
                             if (_selectedSound != 'None') ...[
                               const SizedBox(height: 12),
                               Container(

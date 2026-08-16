@@ -12,6 +12,7 @@ class Task {
   int timeSpentSeconds;
   final int estimatedPomodoros;
   int completedPomodoros;
+  int interruptedPomodoros;
 
   Task({
     required this.id,
@@ -27,5 +28,44 @@ class Task {
     this.timeSpentSeconds = 0,
     this.estimatedPomodoros = 1,
     this.completedPomodoros = 0,
+    this.interruptedPomodoros = 0,
   });
+
+  factory Task.fromJson(Map<String, dynamic> json) {
+    return Task(
+      id: json['id'],
+      projectId: json['projectId'],
+      title: json['title'],
+      durationMinutes: json['durationMinutes'],
+      reminderTime: json['reminderTime'],
+      repeatFrequency: json['repeatFrequency'] ?? 'Never',
+      repeatDays: json['repeatDays'] != null ? List<String>.from(json['repeatDays']) : null,
+      enableNotification: json['enableNotification'] ?? true,
+      isCompleted: json['isCompleted'] ?? false,
+      completedAt: json['completedAt'] != null ? DateTime.parse(json['completedAt']) : null,
+      timeSpentSeconds: json['timeSpentSeconds'] ?? 0,
+      estimatedPomodoros: json['estimatedPomodoros'] ?? 1,
+      completedPomodoros: json['completedPomodoros'] ?? 0,
+      interruptedPomodoros: json['interruptedPomodoros'] ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'projectId': projectId,
+      'title': title,
+      'durationMinutes': durationMinutes,
+      'reminderTime': reminderTime,
+      'repeatFrequency': repeatFrequency,
+      'repeatDays': repeatDays,
+      'enableNotification': enableNotification,
+      'isCompleted': isCompleted,
+      'completedAt': completedAt?.toIso8601String(),
+      'timeSpentSeconds': timeSpentSeconds,
+      'estimatedPomodoros': estimatedPomodoros,
+      'completedPomodoros': completedPomodoros,
+      'interruptedPomodoros': interruptedPomodoros,
+    };
+  }
 }

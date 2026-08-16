@@ -24,6 +24,12 @@ class MainHomeScreen extends StatefulWidget {
 class _MainHomeScreenState extends State<MainHomeScreen> {
   final AppController _controller = AppController();
 
+  @override
+  void initState() {
+    super.initState();
+    _controller.init();
+  }
+
   void _showSettingsModal() {
     showModalBottomSheet(
       context: context,
@@ -63,6 +69,12 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
+        if (!_controller.isInitialized) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
         final screens = [
           TasksAndRemindersTab(
             projects: _controller.projects,
@@ -97,6 +109,9 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             onCompleteTask: _controller.completeActiveTask,
             onSelectTaskPrompt: () {
               _controller.setTabIndex(0);
+            },
+            onSaveSettings: () {
+              _controller.saveSettings();
             },
           ),
           StatsProgressTab(

@@ -8,6 +8,12 @@ void main() async {
   
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+      
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('launcher_icon');
+  const InitializationSettings initializationSettings =
+      InitializationSettings(android: initializationSettingsAndroid);
+  await flutterLocalNotificationsPlugin.initialize(settings: initializationSettings);
   
   flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
     AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
