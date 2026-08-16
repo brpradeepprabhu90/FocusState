@@ -40,6 +40,7 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
   bool _hasNotifiedEnd = false;
   String _currentStage = 'Flow';
   DateTime? _lastTickTime;
+  bool _isRestoring = false;
   StreamSubscription<Map<String, dynamic>?>? _serviceSubscription;
   StreamSubscription<Map<String, dynamic>?>? _completionSubscription;
 
@@ -121,9 +122,16 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     try {
       final prefs = await SharedPreferences.getInstance();
       final bool wasRunning = prefs.getBool('is_timer_running') ?? false;
+      final int? savedSeconds = prefs.getInt('seconds_left');
+
+      if (savedSeconds != null) {
+        setState(() {
+          _secondsLeft = savedSeconds;
+        });
+      }
 
       if (wasRunning) {
-        // Assume background service might still be running it. Just sync from it.
+        _isRestoring = true;
         if (mounted) {
           if (!widget.isTimerRunning) {
             widget.onResumeTimer();
@@ -131,8 +139,6 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
             _startTimer();
           }
         }
-      } else {
-        _resetTimerForTask();
       }
     } catch (e) {
       debugPrint('Error restoring timer: $e');
@@ -174,7 +180,7 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
         _startTimer();
       } else {
         FlutterBackgroundService().invoke('pauseTimer');
-        _clearTimerState();
+        _saveTimerState();
         _updateNativeAppBlocker(false);
         _stopAmbientSound();
       }
@@ -227,6 +233,7 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
   void _resetTimerForTask() {
     FlutterBackgroundService().invoke('pauseTimer');
     _hasNotifiedEnd = false;
+    _clearTimerState();
 
     if (widget.activeTask != null) {
       setState(() {
@@ -384,12 +391,17 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     _saveTimerState();
 
     FlutterBackgroundService().startService();
-    FlutterBackgroundService().invoke('startTimer', {
-      'secondsLeft': _secondsLeft,
-      'taskTitle': widget.activeTask?.title ?? "Focus Session",
-      'estimatedPomodoros': widget.activeTask?.estimatedPomodoros ?? 1,
-      'completedPomodoros': widget.activeTask?.completedPomodoros ?? 0,
-    });
+    
+    if (!_isRestoring) {
+      FlutterBackgroundService().invoke('startTimer', {
+        'secondsLeft': _secondsLeft,
+        'taskTitle': widget.activeTask?.title ?? "Focus Session",
+        'estimatedPomodoros': widget.activeTask?.estimatedPomodoros ?? 1,
+        'completedPomodoros': widget.activeTask?.completedPomodoros ?? 0,
+      });
+    } else {
+      _isRestoring = false;
+    }
   }
 
   @override
