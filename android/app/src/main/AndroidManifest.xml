@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
-        android:label="flow_state_app"
+        android:label="FlowState"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity

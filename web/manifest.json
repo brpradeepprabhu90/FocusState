@@ -1,6 +1,6 @@
 {
-    "name": "flow_state_app",
-    "short_name": "flow_state_app",
+    "name": "FlowState",
+    "short_name": "FlowState",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
