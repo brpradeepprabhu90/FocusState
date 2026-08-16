@@ -5,6 +5,10 @@ import '../models/task.dart';
 import '../widgets/add_project_dialog.dart';
 import '../widgets/add_task_modal.dart';
 
+// Extracted Widgets
+import '../widgets/project_filter_dropdown.dart';
+import '../widgets/task_list_item.dart';
+
 class TasksAndRemindersTab extends StatefulWidget {
   final List<Project> projects;
   final List<Task> tasks;
@@ -62,8 +66,6 @@ class _TasksAndRemindersTabState extends State<TasksAndRemindersTab> {
         ? widget.tasks.where((t) => !t.isCompleted).toList()
         : widget.tasks.where((t) => !t.isCompleted && t.projectId == _selectedProjectId).toList();
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -102,32 +104,9 @@ class _TasksAndRemindersTabState extends State<TasksAndRemindersTab> {
           const SizedBox(height: 16),
 
           // Project Filter Dropdown
-          DropdownButtonFormField<String?>(
-            value: _selectedProjectId,
-            decoration: InputDecoration(
-              labelText: 'Filter by Project',
-              prefixIcon: const Icon(Icons.filter_alt, color: AppConstants.primaryIndigo),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            items: [
-              const DropdownMenuItem<String?>(
-                value: null,
-                child: Text('All Projects'),
-              ),
-              ...widget.projects.map((proj) {
-                return DropdownMenuItem<String?>(
-                  value: proj.id,
-                  child: Row(
-                    children: [
-                      Icon(Icons.folder, size: 16, color: proj.color),
-                      const SizedBox(width: 8),
-                      Text(proj.name),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ],
+          ProjectFilterDropdown(
+            projects: widget.projects,
+            selectedProjectId: _selectedProjectId,
             onChanged: (val) {
               setState(() {
                 _selectedProjectId = val;
@@ -165,108 +144,13 @@ class _TasksAndRemindersTabState extends State<TasksAndRemindersTab> {
                     orElse: () => Project(id: '0', name: 'General', color: Colors.grey),
                   );
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: isCurrentActive
-                          ? AppConstants.primaryIndigo.withOpacity(0.15)
-                          : (isDark ? AppConstants.darkSurface : AppConstants.lightSurface),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: isDark
-                          ? []
-                          : [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              )
-                            ],
-                      border: Border.all(
-                        color: isRunning
-                            ? AppConstants.accentEmerald
-                            : (isCurrentActive ? AppConstants.primaryIndigo : Colors.transparent),
-                        width: 2,
-                      ),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      leading: Checkbox(
-                        value: task.isCompleted,
-                        activeColor: AppConstants.accentEmerald,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                        onChanged: (val) {
-                          if (val == true) {
-                            widget.onCompleteTaskDirectly(task);
-                          }
-                        },
-                      ),
-                      title: Text(
-                        task.title,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 6.0),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: proj.color.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                proj.name,
-                                style: TextStyle(
-                                    color: proj.color, fontSize: 11, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.schedule, size: 14, color: Colors.grey[500]),
-                                const SizedBox(width: 4),
-                                Text('${task.durationMinutes}m',
-                                    style: TextStyle(color: Colors.grey[500], fontSize: 12)),
-                              ],
-                            ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.format_list_numbered, size: 14, color: AppConstants.accentIndigoSoft),
-                                const SizedBox(width: 4),
-                                Text('${task.completedPomodoros}/${task.estimatedPomodoros}',
-                                    style: const TextStyle(color: AppConstants.accentIndigoSoft, fontSize: 12)),
-                              ],
-                            ),
-                            if (task.repeatFrequency != 'Never')
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.repeat, size: 14, color: Colors.amber[600]),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    task.repeatDays != null && task.repeatDays!.isNotEmpty
-                                        ? '${task.repeatFrequency} (${task.repeatDays!.join(", ")})'
-                                        : task.repeatFrequency,
-                                    style: TextStyle(color: Colors.amber[600], fontSize: 12),
-                                  ),
-                                ],
-                              ),
-                          ],
-                        ),
-                      ),
-                      trailing: IconButton(
-                        iconSize: 36,
-                        icon: Icon(
-                          isRunning ? Icons.pause_circle_filled : Icons.play_circle_fill,
-                          color: isRunning ? AppConstants.warningAmber : AppConstants.primaryIndigo,
-                        ),
-                        tooltip: isRunning ? 'Pause Timer' : 'Play & Start Focus (Go to Tab 2)',
-                        onPressed: () => widget.onToggleTaskTimer(task),
-                      ),
-                    ),
+                  return TaskListItem(
+                    task: task,
+                    project: proj,
+                    isCurrentActive: isCurrentActive,
+                    isRunning: isRunning,
+                    onCompleteTaskDirectly: widget.onCompleteTaskDirectly,
+                    onToggleTaskTimer: widget.onToggleTaskTimer,
                   );
                 },
               ),
