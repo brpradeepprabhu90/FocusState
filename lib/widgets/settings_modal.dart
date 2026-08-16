@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/app_settings.dart';
 
 class SettingsModal extends StatefulWidget {
@@ -40,6 +44,96 @@ class _SettingsModalState extends State<SettingsModal> {
     _tempTheme = widget.currentThemeMode;
   }
 
+  Future<void> _exportData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final keys = prefs.getKeys();
+      final data = <String, dynamic>{};
+      for (final key in keys) {
+        data[key] = prefs.get(key);
+      }
+      final jsonString = jsonEncode(data);
+
+      String? outputFile = await FilePicker.platform.saveFile(
+        dialogTitle: 'Save Backup File',
+        fileName: 'flowstate_backup.json',
+      );
+
+      if (outputFile != null) {
+        final file = File(outputFile);
+        await file.writeAsString(jsonString);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Backup exported successfully!')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error exporting backup: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _importData() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        final file = File(result.files.single.path!);
+        final jsonString = await file.readAsString();
+        final data = jsonDecode(jsonString) as Map<String, dynamic>;
+
+        final prefs = await SharedPreferences.getInstance();
+        for (final key in data.keys) {
+          final value = data[key];
+          if (value is String) {
+            await prefs.setString(key, value);
+          } else if (value is int) {
+            await prefs.setInt(key, value);
+          } else if (value is bool) {
+            await prefs.setBool(key, value);
+          } else if (value is double) {
+            await prefs.setDouble(key, value);
+          } else if (value is List) {
+            await prefs.setStringList(key, value.cast<String>());
+          }
+        }
+        
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Import Successful'),
+              content: const Text('Your backup has been restored. Please restart the app for changes to take effect.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.pop(context);
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error importing backup: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -49,7 +143,9 @@ class _SettingsModalState extends State<SettingsModal> {
         right: 24,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
-      child: Column(
+      child: SingleChildScrollView(
+        child: SingleChildScrollView(
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -161,6 +257,28 @@ class _SettingsModalState extends State<SettingsModal> {
               onPressed: widget.onRequestBackgroundUsage,
             ),
           ),
+          const Divider(),
+          const Text('Data Management', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.download),
+                  label: const Text('Export Backup'),
+                  onPressed: _exportData,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.upload),
+                  label: const Text('Import Backup'),
+                  onPressed: _importData,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
@@ -197,6 +315,7 @@ class _SettingsModalState extends State<SettingsModal> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
