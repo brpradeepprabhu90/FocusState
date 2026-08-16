@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -44,6 +45,7 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
   String _currentStage = 'Flow';
   DateTime? _lastTickTime;
   bool _isRestoring = false;
+  Timer? _desktopTimer;
   StreamSubscription<Map<String, dynamic>?>? _serviceSubscription;
   StreamSubscription<Map<String, dynamic>?>? _completionSubscription;
 
@@ -81,34 +83,36 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _loadInstalledApps();
     
-    _serviceSubscription = FlutterBackgroundService().on('update').listen((event) {
-      if (!mounted || event == null) return;
-      setState(() {
-        _secondsLeft = event['secondsLeft'] ?? _secondsLeft;
-        _hasNotifiedEnd = event['hasNotifiedCompletion'] ?? false;
-        if (widget.activeTask != null && widget.isTimerRunning) {
-          final now = DateTime.now();
-          if (_lastTickTime != null) {
-            final elapsedSinceLastTick = now.difference(_lastTickTime!).inSeconds;
-            if (elapsedSinceLastTick > 0 && elapsedSinceLastTick < 5) {
-               widget.activeTask!.timeSpentSeconds += elapsedSinceLastTick;
+    if (Platform.isAndroid || Platform.isIOS) {
+      _serviceSubscription = FlutterBackgroundService().on('update').listen((event) {
+        if (!mounted || event == null) return;
+        setState(() {
+          _secondsLeft = event['secondsLeft'] ?? _secondsLeft;
+          _hasNotifiedEnd = event['hasNotifiedCompletion'] ?? false;
+          if (widget.activeTask != null && widget.isTimerRunning) {
+            final now = DateTime.now();
+            if (_lastTickTime != null) {
+              final elapsedSinceLastTick = now.difference(_lastTickTime!).inSeconds;
+              if (elapsedSinceLastTick > 0 && elapsedSinceLastTick < 5) {
+                 widget.activeTask!.timeSpentSeconds += elapsedSinceLastTick;
+              }
             }
+            _lastTickTime = now;
           }
-          _lastTickTime = now;
-        }
+        });
       });
-    });
 
-    _completionSubscription = FlutterBackgroundService().on('timerCompleted').listen((event) {
-      if (!mounted) return;
-      if (widget.settings.hapticFeedbackEnabled) {
-        HapticFeedback.heavyImpact();
-      }
-      if (widget.activeTask != null) {
-        widget.activeTask!.completedPomodoros++;
-      }
-      _triggerCompletionNotification();
-    });
+      _completionSubscription = FlutterBackgroundService().on('timerCompleted').listen((event) {
+        if (!mounted) return;
+        if (widget.settings.hapticFeedbackEnabled) {
+          HapticFeedback.heavyImpact();
+        }
+        if (widget.activeTask != null) {
+          widget.activeTask!.completedPomodoros++;
+        }
+        _triggerCompletionNotification();
+      });
+    }
 
     _restorePersistedTimer();
   }
@@ -194,7 +198,11 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
       if (widget.isTimerRunning) {
         _startTimer();
       } else {
-        FlutterBackgroundService().invoke('pauseTimer');
+        if (Platform.isAndroid || Platform.isIOS) {
+          FlutterBackgroundService().invoke('pauseTimer');
+        } else {
+          _desktopTimer?.cancel();
+        }
         _saveTimerState();
         _updateNativeAppBlocker(false);
         _stopAmbientSound();
@@ -211,12 +219,30 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     }
   }
 
+  String _extractVideoId(String url) {
+    try {
+      final regExp = RegExp(r'(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})');
+      final match = regExp.firstMatch(url);
+      if (match != null) {
+        return match.group(1)!;
+      }
+    } catch (_) {}
+    return url;
+  }
+
   Future<void> _playAmbientSound() async {
     if (_selectedSound == 'YouTube Link' && _ytController.text.isNotEmpty) {
       try {
-        var videoId = VideoId(_ytController.text);
+        var cleanId = _extractVideoId(_ytController.text);
+        var videoId = VideoId(cleanId);
         var manifest = await _yt.videos.streamsClient.getManifest(videoId);
-        var streamInfo = manifest.audioOnly.withHighestBitrate();
+        
+        var audioStreams = manifest.audioOnly;
+        var mp4Streams = audioStreams.where((s) => s.audioCodec.toLowerCase().contains('mp4a'));
+        var streamInfo = mp4Streams.isNotEmpty 
+            ? mp4Streams.withHighestBitrate() 
+            : audioStreams.withHighestBitrate();
+        
         
         await _audioPlayer.setVolume(_soundVolume);
         await _audioPlayer.play(UrlSource(streamInfo.url.toString()));
@@ -270,7 +296,11 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
   }
 
   void _resetTimerForTask() {
-    FlutterBackgroundService().invoke('pauseTimer');
+    if (Platform.isAndroid || Platform.isIOS) {
+      FlutterBackgroundService().invoke('pauseTimer');
+    } else {
+      _desktopTimer?.cancel();
+    }
     _hasNotifiedEnd = false;
     _clearTimerState();
 
@@ -446,16 +476,50 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     // Save state for persistence
     _saveTimerState();
 
-    FlutterBackgroundService().startService();
-    
-    if (!_isRestoring) {
-      FlutterBackgroundService().invoke('startTimer', {
-        'secondsLeft': _secondsLeft,
-        'taskTitle': widget.activeTask?.title ?? "Focus Session",
-        'estimatedPomodoros': widget.activeTask?.estimatedPomodoros ?? 1,
-        'completedPomodoros': widget.activeTask?.completedPomodoros ?? 0,
-      });
+    if (Platform.isAndroid || Platform.isIOS) {
+      FlutterBackgroundService().startService();
+      
+      if (!_isRestoring) {
+        FlutterBackgroundService().invoke('startTimer', {
+          'secondsLeft': _secondsLeft,
+          'taskTitle': widget.activeTask?.title ?? "Focus Session",
+          'estimatedPomodoros': widget.activeTask?.estimatedPomodoros ?? 1,
+          'completedPomodoros': widget.activeTask?.completedPomodoros ?? 0,
+        });
+      } else {
+        _isRestoring = false;
+      }
     } else {
+      _desktopTimer?.cancel();
+      _desktopTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+        setState(() {
+          _secondsLeft--;
+          if (_secondsLeft <= 0 && !_hasNotifiedEnd) {
+            _hasNotifiedEnd = true;
+            if (widget.settings.hapticFeedbackEnabled) {
+              HapticFeedback.heavyImpact();
+            }
+            if (widget.activeTask != null) {
+              widget.activeTask!.completedPomodoros++;
+            }
+            _triggerCompletionNotification();
+          }
+          if (widget.activeTask != null && widget.isTimerRunning) {
+            final now = DateTime.now();
+            if (_lastTickTime != null) {
+              final elapsedSinceLastTick = now.difference(_lastTickTime!).inSeconds;
+              if (elapsedSinceLastTick > 0 && elapsedSinceLastTick < 5) {
+                widget.activeTask!.timeSpentSeconds += elapsedSinceLastTick;
+              }
+            }
+            _lastTickTime = now;
+          }
+        });
+      });
       _isRestoring = false;
     }
   }
@@ -465,6 +529,7 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _serviceSubscription?.cancel();
     _completionSubscription?.cancel();
+    _desktopTimer?.cancel();
     _stopAmbientSound();
     _audioPlayer.dispose();
     _yt.close();

@@ -11,8 +11,8 @@ class AppSettings {
     this.defaultAppBlockerEnabled = true,
     this.hapticFeedbackEnabled = true,
     this.notificationsEnabled = true,
-    this.youtubeUrl,
-    this.savedYoutubeUrls = const [],
+    this.youtubeUrl = 'https://www.youtube.com/watch?v=tgneSmdEM2c',
+    this.savedYoutubeUrls = const ['https://www.youtube.com/watch?v=tgneSmdEM2c'],
   });
 
   factory AppSettings.fromJson(Map<String, dynamic> json) {
