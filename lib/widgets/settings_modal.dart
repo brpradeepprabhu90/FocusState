@@ -54,7 +54,7 @@ class _SettingsModalState extends State<SettingsModal> {
       }
       final jsonString = jsonEncode(data);
 
-      String? outputFile = await FilePicker.platform.saveFile(
+      String? outputFile = await FilePicker.saveFile(
         dialogTitle: 'Save Backup File',
         fileName: 'flowstate_backup.json',
       );
@@ -79,7 +79,7 @@ class _SettingsModalState extends State<SettingsModal> {
 
   Future<void> _importData() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      FilePickerResult? result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
       );
