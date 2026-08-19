@@ -239,7 +239,7 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
         title: const Text('Permission Required'),
         content: const Text(
             'To forcefully block apps during your flow state, this app requires Accessibility Service permissions.\n\n'
-            'Please find "Flow State" in the settings menu and enable it.'),
+            'Please enable "FlowState App Blocker" in System Accessibility Settings.'),
         actions: [
           TextButton(
             onPressed: () {
@@ -250,9 +250,7 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
           ElevatedButton(
             onPressed: () async {
               Navigator.of(ctx).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Please manually open Settings > Accessibility')),
-              );
+              await _appBlockerService.openAccessibilitySettings();
             },
             child: const Text('Open Settings'),
           ),

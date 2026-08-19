@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/app_settings.dart';
+import '../services/app_blocker_service.dart';
+import '../constants/app_constants.dart';
 
 class SettingsModal extends StatefulWidget {
   final AppSettings settings;
@@ -26,11 +28,17 @@ class SettingsModal extends StatefulWidget {
 }
 
 class _SettingsModalState extends State<SettingsModal> {
+  final AppBlockerService _appBlockerService = AppBlockerService();
+
   late TextEditingController _pomodoroController;
   late bool _blockerDefault;
   late bool _hapticEnabled;
   late bool _notificationsEnabled;
   late ThemeMode _tempTheme;
+
+  bool _accessibilityGranted = false;
+  bool _batteryExemptGranted = false;
+  bool _notificationPermissionGranted = false;
 
   @override
   void initState() {
@@ -42,6 +50,22 @@ class _SettingsModalState extends State<SettingsModal> {
     _hapticEnabled = widget.settings.hapticFeedbackEnabled;
     _notificationsEnabled = widget.settings.notificationsEnabled;
     _tempTheme = widget.currentThemeMode;
+
+    _refreshPermissions();
+  }
+
+  Future<void> _refreshPermissions() async {
+    final acc = await _appBlockerService.checkAccessibilityPermission();
+    final bat = await _appBlockerService.checkBatteryOptimization();
+    final not = await _appBlockerService.checkNotificationPermission();
+
+    if (mounted) {
+      setState(() {
+        _accessibilityGranted = acc;
+        _batteryExemptGranted = bat;
+        _notificationPermissionGranted = not;
+      });
+    }
   }
 
   Future<void> _exportData() async {
@@ -245,17 +269,79 @@ class _SettingsModalState extends State<SettingsModal> {
             },
           ),
           const Divider(),
+
+          // SYSTEM PERMISSIONS MANAGEMENT
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('System Permissions & Services',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              IconButton(
+                icon: const Icon(Icons.refresh, size: 18),
+                tooltip: 'Refresh permission status',
+                onPressed: _refreshPermissions,
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+
+          // 1. Accessibility Service
           ListTile(
-            leading: const Icon(Icons.battery_charging_full, color: Color(0xFF10B981)),
-            title: const Text('Background Usage & Power'),
-            subtitle: const Text('Allow uninterrupted execution in background'),
-            trailing: ElevatedButton.icon(
-              icon: const Icon(Icons.flash_on, size: 16),
-              label: const Text('Enable'),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
-              onPressed: widget.onRequestBackgroundUsage,
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(
+              Icons.block,
+              color: _accessibilityGranted ? AppConstants.accentEmerald : Colors.amber,
+            ),
+            title: const Text('App Blocker Accessibility Service'),
+            subtitle: Text(_accessibilityGranted
+                ? 'Permission granted. Active app blocking ready.'
+                : 'Action required to intercept blocked apps.'),
+            trailing: OutlinedButton(
+              onPressed: () async {
+                await _appBlockerService.openAccessibilitySettings();
+              },
+              child: Text(_accessibilityGranted ? 'Manage' : 'Grant'),
             ),
           ),
+
+          // 2. Battery Exemption
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(
+              Icons.battery_charging_full,
+              color: _batteryExemptGranted ? AppConstants.accentEmerald : Colors.amber,
+            ),
+            title: const Text('Background Execution / Battery Limit'),
+            subtitle: Text(_batteryExemptGranted
+                ? 'Battery optimization exempt. Timer runs reliably.'
+                : 'Allow background execution without OS kill.'),
+            trailing: OutlinedButton(
+              onPressed: () async {
+                await _appBlockerService.requestBatteryOptimization();
+              },
+              child: Text(_batteryExemptGranted ? 'Manage' : 'Grant'),
+            ),
+          ),
+
+          // 3. System Notifications
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(
+              Icons.notifications_active,
+              color: _notificationPermissionGranted ? AppConstants.accentEmerald : Colors.amber,
+            ),
+            title: const Text('System Notifications'),
+            subtitle: Text(_notificationPermissionGranted
+                ? 'Notifications active.'
+                : 'Permission disabled in system settings.'),
+            trailing: OutlinedButton(
+              onPressed: () async {
+                await _appBlockerService.openNotificationSettings();
+              },
+              child: Text(_notificationPermissionGranted ? 'Manage' : 'Grant'),
+            ),
+          ),
+
           const Divider(),
           const Text('Data Management', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           const SizedBox(height: 8),

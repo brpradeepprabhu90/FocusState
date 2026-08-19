@@ -7,6 +7,8 @@ import 'timer_tab.dart';
 import 'stats_tab.dart';
 import '../controllers/app_controller.dart';
 
+import 'permission_onboarding_dialog.dart';
+
 class MainHomeScreen extends StatefulWidget {
   final ThemeMode currentThemeMode;
   final Function(ThemeMode) onThemeChanged;
@@ -27,7 +29,11 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _controller.init();
+    _controller.init().then((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        PermissionOnboardingDialog.showIfNeeded(context);
+      });
+    });
   }
 
   void _showSettingsModal() {
