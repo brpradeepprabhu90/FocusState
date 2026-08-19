@@ -33,16 +33,6 @@ class AppController extends ChangeNotifier {
     projects = await _storageService.loadProjects();
     tasks = await _storageService.loadTasks();
 
-    if (projects.isEmpty) {
-      // Default projects if empty
-      projects = [
-        Project(id: 'p1', name: 'General Tasks', color: AppConstants.primaryIndigo),
-        Project(id: 'p2', name: 'Flutter Dev', color: AppConstants.accentEmerald),
-        Project(id: 'p3', name: 'UI/UX Design', color: AppConstants.warningAmber),
-      ];
-      await _storageService.saveProjects(projects);
-    }
-
     _isInitialized = true;
     notifyListeners();
   }
@@ -117,6 +107,27 @@ class AppController extends ChangeNotifier {
   void addNewProject(Project newProject) {
     projects.add(newProject);
     saveProjects();
+    notifyListeners();
+  }
+
+  void updateProject(Project updatedProject) {
+    final index = projects.indexWhere((p) => p.id == updatedProject.id);
+    if (index != -1) {
+      projects[index] = updatedProject;
+      saveProjects();
+      notifyListeners();
+    }
+  }
+
+  void deleteProject(String projectId) {
+    projects.removeWhere((p) => p.id == projectId);
+    for (var task in tasks) {
+      if (task.projectId == projectId) {
+        task.projectId = '';
+      }
+    }
+    saveProjects();
+    saveTasks();
     notifyListeners();
   }
 

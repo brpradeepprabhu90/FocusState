@@ -105,6 +105,8 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             },
             onAddTask: _controller.addNewTask,
             onAddProject: _controller.addNewProject,
+            onUpdateProject: _controller.updateProject,
+            onDeleteProject: _controller.deleteProject,
           ),
           TimerTab(
             activeTask: _controller.activeTask,

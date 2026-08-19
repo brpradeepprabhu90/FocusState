@@ -89,7 +89,7 @@ void onStart(ServiceInstance service) async {
       final now = DateTime.now();
       secondsLeft = targetEndTime!.difference(now).inSeconds;
     } else {
-      secondsLeft = payload['secondsLeft'] ?? (25 * 60);
+      secondsLeft = payload['secondsLeft'] ?? payload['seconds'] ?? (25 * 60);
       taskTitle = payload['taskTitle'] ?? "Focus Session";
       estimatedPomodoros = payload['estimatedPomodoros'] ?? 1;
       completedPomodoros = payload['completedPomodoros'] ?? 0;

@@ -18,6 +18,8 @@ class TasksAndRemindersTab extends StatefulWidget {
   final Function(Task) onCompleteTaskDirectly;
   final Function(Task) onAddTask;
   final Function(Project) onAddProject;
+  final Function(Project)? onUpdateProject;
+  final Function(String)? onDeleteProject;
 
   const TasksAndRemindersTab({
     Key? key,
@@ -29,6 +31,8 @@ class TasksAndRemindersTab extends StatefulWidget {
     required this.onCompleteTaskDirectly,
     required this.onAddTask,
     required this.onAddProject,
+    this.onUpdateProject,
+    this.onDeleteProject,
   }) : super(key: key);
 
   @override
@@ -41,7 +45,49 @@ class _TasksAndRemindersTabState extends State<TasksAndRemindersTab> {
   void _showAddProjectDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (ctx) => AddProjectDialog(onAddProject: widget.onAddProject),
+      builder: (ctx) => AddProjectDialog(
+        onAddProject: widget.onAddProject,
+      ),
+    );
+  }
+
+  void _showEditProjectDialog(BuildContext context, Project project) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AddProjectDialog(
+        project: project,
+        onAddProject: widget.onAddProject,
+        onUpdateProject: widget.onUpdateProject,
+      ),
+    );
+  }
+
+  void _confirmDeleteProject(BuildContext context, Project project) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Project'),
+        content: Text('Are you sure you want to delete "${project.name}"? Tasks associated with this project will not be deleted.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(ctx);
+              if (widget.onDeleteProject != null) {
+                widget.onDeleteProject!(project.id);
+                setState(() {
+                  _selectedProjectId = null;
+                });
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -62,6 +108,8 @@ class _TasksAndRemindersTabState extends State<TasksAndRemindersTab> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedProject = widget.projects.where((p) => p.id == _selectedProjectId).firstOrNull;
+
     final filteredTasks = _selectedProjectId == null
         ? widget.tasks.where((t) => !t.isCompleted).toList()
         : widget.tasks.where((t) => !t.isCompleted && t.projectId == _selectedProjectId).toList();
@@ -103,7 +151,7 @@ class _TasksAndRemindersTabState extends State<TasksAndRemindersTab> {
           ),
           const SizedBox(height: 16),
 
-          // Project Filter Dropdown
+          // Project Filter Dropdown & Controls
           ProjectFilterDropdown(
             projects: widget.projects,
             selectedProjectId: _selectedProjectId,
@@ -113,6 +161,44 @@ class _TasksAndRemindersTabState extends State<TasksAndRemindersTab> {
               });
             },
           ),
+
+          if (selectedProject != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: selectedProject.color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: selectedProject.color.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.folder, size: 18, color: selectedProject.color),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      selectedProject.name,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: selectedProject.color,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 18),
+                    tooltip: 'Edit Project',
+                    onPressed: () => _showEditProjectDialog(context, selectedProject),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                    tooltip: 'Delete Project',
+                    onPressed: () => _confirmDeleteProject(context, selectedProject),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           const SizedBox(height: 16),
 
           // Tasks Grouped View
@@ -121,11 +207,16 @@ class _TasksAndRemindersTabState extends State<TasksAndRemindersTab> {
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.folder_open, size: 64, color: Colors.grey),
-                    SizedBox(height: 12),
-                    Text('No pending tasks in this project. Click "+" to create one.',
-                        style: TextStyle(color: Colors.grey)),
+                  children: [
+                    const Icon(Icons.folder_open, size: 64, color: Colors.grey),
+                    const SizedBox(height: 12),
+                    Text(
+                      widget.projects.isEmpty
+                          ? 'No projects created yet. Click "+ Project" to create one.'
+                          : 'No pending tasks in this project. Click "+" to create one.',
+                      style: const TextStyle(color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
                   ],
                 ),
               ),

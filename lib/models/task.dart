@@ -1,6 +1,6 @@
 class Task {
   final String id;
-  final String projectId;
+  String projectId;
   final String title;
   final int durationMinutes; // total estimated minutes
   final String? reminderTime; // e.g. "14:30" or "In 10 mins"

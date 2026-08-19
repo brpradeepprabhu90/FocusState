@@ -167,10 +167,16 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
   @override
   void didUpdateWidget(covariant TimerTab oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.activeTask?.id != oldWidget.activeTask?.id ||
-        widget.settings.defaultPomodoroMinutes != oldWidget.settings.defaultPomodoroMinutes) {
+
+    final bool taskChanged = widget.activeTask?.id != oldWidget.activeTask?.id;
+    final bool settingsChanged = widget.settings.defaultPomodoroMinutes != oldWidget.settings.defaultPomodoroMinutes;
+    final bool runningChanged = widget.isTimerRunning != oldWidget.isTimerRunning;
+
+    if (taskChanged || settingsChanged) {
       _resetTimerForTask();
-    } else if (widget.isTimerRunning != oldWidget.isTimerRunning) {
+    }
+
+    if (runningChanged) {
       if (widget.isTimerRunning) {
         _startTimer();
       } else {
@@ -282,6 +288,7 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
       }
       
       service.invoke('startTimer', {
+        'secondsLeft': _secondsLeft,
         'seconds': _secondsLeft,
         'taskTitle': widget.activeTask?.title ?? 'Default Focus Session',
         'isRestoring': _isRestoring,
