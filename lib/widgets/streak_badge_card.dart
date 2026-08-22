@@ -22,11 +22,11 @@ class _StreakBadgeCardState extends State<StreakBadgeCard> {
   final List<String> _categories = [
     'All',
     'Unlocked',
-    'Streaks',
-    'Hours',
-    'Pomodoros',
-    'Tasks',
-    'Goals',
+    'Living Garden 🪴',
+    'Energy Trophies ⚡',
+    'Mindful Flow 🧘',
+    'Task Harvest 🌾',
+    'Rest Sanctuary 🛋️',
   ];
 
   @override
@@ -75,25 +75,31 @@ class _StreakBadgeCardState extends State<StreakBadgeCard> {
                   color: Colors.white24,
                   shape: BoxShape.circle,
                 ),
-                child: const Text('🏆', style: TextStyle(fontSize: 28)),
+                child: const Text('🪴', style: TextStyle(fontSize: 28)),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '${widget.streakData.currentStreak}-Day Focus Streak 🔥',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          '${widget.streakData.currentStreak}-Day Garden Streak',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Text('🔥', style: TextStyle(fontSize: 16)),
+                      ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
-                      'Badges Unlocked: $unlockedCount / $totalBadges',
-                      style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w600),
+                      'Living Garden 🪴 • $unlockedCount / $totalBadges Unlocked',
+                      style: const TextStyle(fontSize: 12, color: Colors.white70),
                     ),
                   ],
                 ),

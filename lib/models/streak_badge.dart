@@ -44,7 +44,7 @@ class FocusBadge {
     required this.emoji,
     required this.icon,
     this.isUnlocked = false,
-    this.category = 'General',
+    this.category = 'Garden',
   });
 
   static List<FocusBadge> generate500Badges({
@@ -57,68 +57,79 @@ class FocusBadge {
   }) {
     final List<FocusBadge> badges = [];
 
-    // Track 1: Streak Badges (100 Badges: 1 to 100 Days)
+    final gardenEmojis = ['🌱', '🌿', '☘️', '🍀', '🌸', '🌺', '🌻', '🌹', '🌷', '🌲', '🌳', '🌴', '🌵', '🌾', '🪷'];
+    final energyEmojis = ['🕯️', '🔋', '⚡', '🌟', '💎', '🔮', '✨', '🏆', '👑', '🎖️'];
+    final flowEmojis = ['🧘', '🌊', '🌬️', '🧘‍♂️', '🌈', '🕊️', '☁️', '🌙', '⭐', '☀️'];
+    final harvestEmojis = ['🍎', '🍊', '🍇', '🍓', '🍒', '🍑', '🍐', '🫐', '🌾', '🏆'];
+    final sanctuaryEmojis = ['🛋️', '🛌', '☕', '🍵', '🕯️', '🌙', '🛋️', '💆', '🧖', '✨'];
+
+    // Category 1: Living Focus Garden (100 Flora Badges)
     for (int i = 1; i <= 100; i++) {
+      final emoji = gardenEmojis[(i - 1) % gardenEmojis.length];
       badges.add(FocusBadge(
-        id: 'streak_$i',
-        title: '$i-Day Streak',
-        description: 'Maintain a $i-day focus streak',
-        emoji: i >= 30 ? '👑' : (i >= 10 ? '🏆' : '🔥'),
-        icon: Icons.local_fire_department,
+        id: 'garden_$i',
+        title: i == 1 ? 'First Sprout' : 'Garden Lvl $i',
+        description: 'Nurtured garden for $i days of focus',
+        emoji: emoji,
+        icon: Icons.filter_vintage,
         isUnlocked: currentStreak >= i || longestStreak >= i,
-        category: 'Streaks',
+        category: 'Living Garden 🪴',
       ));
     }
 
-    // Track 2: Focus Hours Badges (100 Badges: 1 to 100 Hours)
+    // Category 2: Spoon Theory Energy Trophies (100 Energy Badges)
     for (int i = 1; i <= 100; i++) {
+      final emoji = energyEmojis[(i - 1) % energyEmojis.length];
       badges.add(FocusBadge(
-        id: 'hours_$i',
-        title: '$i Hr${i > 1 ? 's' : ''}',
-        description: 'Log $i+ hours of focus',
-        emoji: i >= 50 ? '💎' : '⏱️',
-        icon: Icons.timer,
-        isUnlocked: totalFocusHours >= i,
-        category: 'Hours',
-      ));
-    }
-
-    // Track 3: Pomodoro Session Badges (100 Badges: 1 to 100 Pomodoros)
-    for (int i = 1; i <= 100; i++) {
-      badges.add(FocusBadge(
-        id: 'pom_$i',
-        title: '$i Pom${i > 1 ? 's' : ''}',
-        description: 'Complete $i Pomodoro focus sessions',
-        emoji: i >= 50 ? '🌟' : '⚡',
+        id: 'energy_$i',
+        title: '$i Hr Energy',
+        description: 'Preserved energy & logged $i+ focus hours',
+        emoji: emoji,
         icon: Icons.bolt,
+        isUnlocked: totalFocusHours >= i,
+        category: 'Energy Trophies ⚡',
+      ));
+    }
+
+    // Category 3: Mindful Flow Milestones (100 Flow Badges)
+    for (int i = 1; i <= 100; i++) {
+      final emoji = flowEmojis[(i - 1) % flowEmojis.length];
+      badges.add(FocusBadge(
+        id: 'flow_$i',
+        title: '$i Flow Session${i > 1 ? 's' : ''}',
+        description: 'Achieved deep flow in $i Pomodoro sessions',
+        emoji: emoji,
+        icon: Icons.auto_awesome,
         isUnlocked: totalPomodorosCompleted >= i,
-        category: 'Pomodoros',
+        category: 'Mindful Flow 🧘',
       ));
     }
 
-    // Track 4: Task Completion Badges (100 Badges: 1 to 100 Tasks)
+    // Category 4: Task Harvest Badges (100 Harvest Badges)
     for (int i = 1; i <= 100; i++) {
+      final emoji = harvestEmojis[(i - 1) % harvestEmojis.length];
       badges.add(FocusBadge(
-        id: 'task_$i',
-        title: '$i Task${i > 1 ? 's' : ''}',
-        description: 'Complete $i tasks',
-        emoji: i >= 50 ? '🏅' : '✅',
-        icon: Icons.check_circle,
+        id: 'harvest_$i',
+        title: '$i Crop Harvest',
+        description: 'Completed $i focus tasks in your harvest',
+        emoji: emoji,
+        icon: Icons.inventory_2,
         isUnlocked: totalTasksCompleted >= i,
-        category: 'Tasks',
+        category: 'Task Harvest 🌾',
       ));
     }
 
-    // Track 5: Active Days Goal Badges (100 Badges: 1 to 100 Goal Days)
+    // Category 5: Rest & Sanctuary Badges (100 Sanctuary Badges)
     for (int i = 1; i <= 100; i++) {
+      final emoji = sanctuaryEmojis[(i - 1) % sanctuaryEmojis.length];
       badges.add(FocusBadge(
-        id: 'goal_day_$i',
-        title: '$i Goal Day${i > 1 ? 's' : ''}',
-        description: 'Achieve daily goal for $i days',
-        emoji: i >= 50 ? '🎖️' : '🎯',
-        icon: Icons.track_changes,
+        id: 'sanctuary_$i',
+        title: '$i Sanctuary Day${i > 1 ? 's' : ''}',
+        description: 'Achieved daily goal for $i days with zero shame',
+        emoji: emoji,
+        icon: Icons.bathtub,
         isUnlocked: activeDaysCount >= i,
-        category: 'Goals',
+        category: 'Rest Sanctuary 🛋️',
       ));
     }
 
