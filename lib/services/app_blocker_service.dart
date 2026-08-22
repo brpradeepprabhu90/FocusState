@@ -10,6 +10,7 @@ class AppBlockerService {
   final StorageService _storageService = StorageService();
 
   Future<List<AppInfo>> loadInstalledApps() async {
+    if (!Platform.isAndroid) return AppConstants.defaultAppsToBlock;
     try {
       final savedStates = await _storageService.loadBlockedAppStates();
       final List<dynamic>? apps = await _channel.invokeMethod('getInstalledApps');

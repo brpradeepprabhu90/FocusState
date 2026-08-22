@@ -304,13 +304,6 @@ class StatsProgressTab extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Streak & Milestones Section
-          StreakBadgeCard(
-            streakData: streakData,
-            badges: badges,
-          ),
-          const SizedBox(height: 24),
-
           // Interactive Monthly Calendar View
           const Text(
             'Monthly Activity Calendar',
@@ -324,6 +317,13 @@ class StatsProgressTab extends StatelessWidget {
             activeGoalDates: streakData.activeDates,
             tasks: tasks,
             dailyGoalPomodoros: settings.dailyGoalPomodoros,
+          ),
+          const SizedBox(height: 28),
+
+          // Streak & Milestones Section (Moved toward the end of scroll)
+          StreakBadgeCard(
+            streakData: streakData,
+            badges: badges,
           ),
         ],
       ),
