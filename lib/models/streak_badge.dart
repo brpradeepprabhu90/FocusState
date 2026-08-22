@@ -63,13 +63,20 @@ class FocusBadge {
     final harvestEmojis = ['🍎', '🍊', '🍇', '🍓', '🍒', '🍑', '🍐', '🫐', '🌾', '🏆'];
     final sanctuaryEmojis = ['🛋️', '🛌', '☕', '🍵', '🕯️', '🌙', '🛋️', '💆', '🧖', '✨'];
 
-    // Category 1: Living Focus Garden (100 Flora Badges)
+    final growthStages = [
+      'First Sprout 🌱', 'Budding Leaf 🌿', 'Deep Roots 🌾', 'Blooming Lotus 🌸',
+      'Golden Sunflower 🌻', 'Resilient Pine 🌲', 'Ancient Oak 🌳', 'Sacred Canopy 🪷',
+      'Wild Fern ☘️', 'Evergreen Grove 🌲', 'Meadow Sanctuary 🍀', 'Serene Palm 🌴'
+    ];
+
+    // Category 1: Living Focus Garden (100 Flora Badges with Natural Growth Stages)
     for (int i = 1; i <= 100; i++) {
       final emoji = gardenEmojis[(i - 1) % gardenEmojis.length];
+      final stageName = growthStages[(i - 1) % growthStages.length];
       badges.add(FocusBadge(
         id: 'garden_$i',
-        title: i == 1 ? 'First Sprout' : 'Garden Lvl $i',
-        description: 'Nurtured garden for $i days of focus',
+        title: '$stageName Stage $i',
+        description: 'Nurtured garden through $i days of focus',
         emoji: emoji,
         icon: Icons.filter_vintage,
         isUnlocked: currentStreak >= i || longestStreak >= i,
