@@ -104,6 +104,18 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateTask(Task updatedTask) {
+    final index = tasks.indexWhere((t) => t.id == updatedTask.id);
+    if (index != -1) {
+      tasks[index] = updatedTask;
+      if (activeTask?.id == updatedTask.id) {
+        activeTask = updatedTask;
+      }
+      saveTasks();
+      notifyListeners();
+    }
+  }
+
   void addNewProject(Project newProject) {
     projects.add(newProject);
     saveProjects();

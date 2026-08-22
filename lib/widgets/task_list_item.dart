@@ -10,6 +10,7 @@ class TaskListItem extends StatelessWidget {
   final bool isRunning;
   final ValueChanged<Task> onCompleteTaskDirectly;
   final ValueChanged<Task> onToggleTaskTimer;
+  final ValueChanged<Task>? onEditTask;
 
   const TaskListItem({
     Key? key,
@@ -19,6 +20,7 @@ class TaskListItem extends StatelessWidget {
     required this.isRunning,
     required this.onCompleteTaskDirectly,
     required this.onToggleTaskTimer,
+    this.onEditTask,
   }) : super(key: key);
 
   @override
@@ -117,14 +119,25 @@ class TaskListItem extends StatelessWidget {
             ],
           ),
         ),
-        trailing: IconButton(
-          iconSize: 36,
-          icon: Icon(
-            isRunning ? Icons.pause_circle_filled : Icons.play_circle_fill,
-            color: isRunning ? AppConstants.warningAmber : AppConstants.primaryIndigo,
-          ),
-          tooltip: isRunning ? 'Pause Timer' : 'Play & Start Focus (Go to Tab 2)',
-          onPressed: () => onToggleTaskTimer(task),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (onEditTask != null)
+              IconButton(
+                icon: const Icon(Icons.edit_note, size: 24, color: AppConstants.accentIndigoSoft),
+                tooltip: 'Edit Task',
+                onPressed: () => onEditTask!(task),
+              ),
+            IconButton(
+              iconSize: 36,
+              icon: Icon(
+                isRunning ? Icons.pause_circle_filled : Icons.play_circle_fill,
+                color: isRunning ? AppConstants.warningAmber : AppConstants.primaryIndigo,
+              ),
+              tooltip: isRunning ? 'Pause Timer' : 'Play & Start Focus (Go to Tab 2)',
+              onPressed: () => onToggleTaskTimer(task),
+            ),
+          ],
         ),
       ),
     );

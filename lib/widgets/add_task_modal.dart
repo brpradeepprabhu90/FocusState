@@ -7,12 +7,16 @@ class AddTaskModal extends StatefulWidget {
   final List<Project> projects;
   final String? initialProjectId;
   final Function(Task) onAddTask;
+  final Task? taskToEdit;
+  final Function(Task)? onUpdateTask;
 
   const AddTaskModal({
     Key? key,
     required this.projects,
     this.initialProjectId,
     required this.onAddTask,
+    this.taskToEdit,
+    this.onUpdateTask,
   }) : super(key: key);
 
   @override
@@ -28,16 +32,33 @@ class _AddTaskModalState extends State<AddTaskModal> {
   bool _enableNotification = true;
   int _estimatedPomodoros = 1;
   final List<String> _weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  late final List<String> _selectedDays = List.from(_weekDays);
+  late List<String> _selectedDays;
 
   @override
   void initState() {
     super.initState();
-    _selectedProjId = widget.initialProjectId ?? widget.projects.first.id;
+    if (widget.taskToEdit != null) {
+      final task = widget.taskToEdit!;
+      _selectedProjId = widget.projects.any((p) => p.id == task.projectId)
+          ? task.projectId
+          : (widget.projects.isNotEmpty ? widget.projects.first.id : '');
+      _titleController.text = task.title;
+      _durationController.text = task.durationMinutes.toString();
+      _reminderController.text = task.reminderTime ?? '';
+      _repeatFrequency = task.repeatFrequency;
+      _enableNotification = task.enableNotification;
+      _estimatedPomodoros = task.estimatedPomodoros;
+      _selectedDays = task.repeatDays != null ? List.from(task.repeatDays!) : List.from(_weekDays);
+    } else {
+      _selectedProjId = widget.initialProjectId ?? (widget.projects.isNotEmpty ? widget.projects.first.id : '');
+      _selectedDays = List.from(_weekDays);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.taskToEdit != null;
+
     return Padding(
       padding: EdgeInsets.only(
         top: 24,
@@ -53,12 +74,12 @@ class _AddTaskModalState extends State<AddTaskModal> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
-                children: const [
-                  Icon(Icons.add_task, color: AppConstants.accentIndigoSoft),
-                  SizedBox(width: 8),
+                children: [
+                  Icon(isEditing ? Icons.edit_note : Icons.add_task, color: AppConstants.accentIndigoSoft),
+                  const SizedBox(width: 8),
                   Text(
-                    'Create Task & Schedule',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    isEditing ? 'Edit Task & Schedule' : 'Create Task & Schedule',
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -70,7 +91,7 @@ class _AddTaskModalState extends State<AddTaskModal> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _selectedProjId,
+            value: _selectedProjId.isNotEmpty ? _selectedProjId : null,
             decoration: InputDecoration(
               labelText: 'Assigned Project',
               prefixIcon: const Icon(Icons.folder, color: AppConstants.accentIndigoSoft),
@@ -211,8 +232,8 @@ class _AddTaskModalState extends State<AddTaskModal> {
             width: double.infinity,
             height: 50,
             child: ElevatedButton.icon(
-              icon: const Icon(Icons.save),
-              label: const Text('Save Task', style: TextStyle(fontSize: 16)),
+              icon: Icon(isEditing ? Icons.check : Icons.save),
+              label: Text(isEditing ? 'Update Task' : 'Save Task', style: const TextStyle(fontSize: 16)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppConstants.primaryIndigo,
                 foregroundColor: Colors.white,
@@ -220,9 +241,9 @@ class _AddTaskModalState extends State<AddTaskModal> {
               ),
               onPressed: () {
                 if (_titleController.text.trim().isNotEmpty) {
-                  widget.onAddTask(
-                    Task(
-                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  if (isEditing) {
+                    final updatedTask = Task(
+                      id: widget.taskToEdit!.id,
                       projectId: _selectedProjId,
                       title: _titleController.text.trim(),
                       durationMinutes: int.tryParse(_durationController.text) ?? 25,
@@ -230,9 +251,33 @@ class _AddTaskModalState extends State<AddTaskModal> {
                       repeatFrequency: _repeatFrequency,
                       repeatDays: _selectedDays.isNotEmpty ? List.from(_selectedDays) : null,
                       enableNotification: _enableNotification,
+                      isCompleted: widget.taskToEdit!.isCompleted,
+                      completedAt: widget.taskToEdit!.completedAt,
+                      timeSpentSeconds: widget.taskToEdit!.timeSpentSeconds,
                       estimatedPomodoros: _estimatedPomodoros,
-                    ),
-                  );
+                      completedPomodoros: widget.taskToEdit!.completedPomodoros,
+                      interruptedPomodoros: widget.taskToEdit!.interruptedPomodoros,
+                    );
+                    if (widget.onUpdateTask != null) {
+                      widget.onUpdateTask!(updatedTask);
+                    } else {
+                      widget.onAddTask(updatedTask);
+                    }
+                  } else {
+                    widget.onAddTask(
+                      Task(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        projectId: _selectedProjId,
+                        title: _titleController.text.trim(),
+                        durationMinutes: int.tryParse(_durationController.text) ?? 25,
+                        reminderTime: _reminderController.text.trim(),
+                        repeatFrequency: _repeatFrequency,
+                        repeatDays: _selectedDays.isNotEmpty ? List.from(_selectedDays) : null,
+                        enableNotification: _enableNotification,
+                        estimatedPomodoros: _estimatedPomodoros,
+                      ),
+                    );
+                  }
                   Navigator.pop(context);
                 }
               },

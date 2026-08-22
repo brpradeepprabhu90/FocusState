@@ -17,6 +17,7 @@ class TasksAndRemindersTab extends StatefulWidget {
   final Function(Task) onToggleTaskTimer;
   final Function(Task) onCompleteTaskDirectly;
   final Function(Task) onAddTask;
+  final Function(Task)? onUpdateTask;
   final Function(Project) onAddProject;
   final Function(Project)? onUpdateProject;
   final Function(String)? onDeleteProject;
@@ -30,6 +31,7 @@ class TasksAndRemindersTab extends StatefulWidget {
     required this.onToggleTaskTimer,
     required this.onCompleteTaskDirectly,
     required this.onAddTask,
+    this.onUpdateTask,
     required this.onAddProject,
     this.onUpdateProject,
     this.onDeleteProject,
@@ -102,6 +104,23 @@ class _TasksAndRemindersTabState extends State<TasksAndRemindersTab> {
         projects: widget.projects,
         initialProjectId: _selectedProjectId,
         onAddTask: widget.onAddTask,
+        onUpdateTask: widget.onUpdateTask,
+      ),
+    );
+  }
+
+  void _showEditTaskBottomSheet(BuildContext context, Task task) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => AddTaskModal(
+        projects: widget.projects,
+        taskToEdit: task,
+        onAddTask: widget.onAddTask,
+        onUpdateTask: widget.onUpdateTask,
       ),
     );
   }
@@ -242,6 +261,7 @@ class _TasksAndRemindersTabState extends State<TasksAndRemindersTab> {
                     isRunning: isRunning,
                     onCompleteTaskDirectly: widget.onCompleteTaskDirectly,
                     onToggleTaskTimer: widget.onToggleTaskTimer,
+                    onEditTask: (t) => _showEditTaskBottomSheet(context, t),
                   );
                 },
               ),
