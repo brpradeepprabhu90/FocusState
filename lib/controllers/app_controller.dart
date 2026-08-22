@@ -4,6 +4,7 @@ import '../constants/app_constants.dart';
 import '../models/app_settings.dart';
 import '../models/project.dart';
 import '../models/task.dart';
+import '../models/streak_badge.dart';
 
 import '../services/storage_service.dart';
 
@@ -18,6 +19,7 @@ class AppController extends ChangeNotifier {
 
   List<Project> projects = [];
   List<Task> tasks = [];
+  StreakData streakData = StreakData();
 
   Task? activeTask;
   bool isTimerRunning = false;
@@ -32,13 +34,84 @@ class AppController extends ChangeNotifier {
     settings = await _storageService.loadSettings();
     projects = await _storageService.loadProjects();
     tasks = await _storageService.loadTasks();
+    streakData = await _storageService.loadStreakData();
 
+    recalculateStreak();
     _isInitialized = true;
+    notifyListeners();
+  }
+
+  String _formatDateKey(DateTime dt) {
+    final y = dt.year.toString().padLeft(4, '0');
+    final m = dt.month.toString().padLeft(2, '0');
+    final d = dt.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
+  }
+
+  void recalculateStreak() {
+    final now = DateTime.now();
+    final todayKey = _formatDateKey(now);
+
+    final todayPomodoros = tasks.where((t) {
+      if (t.completedAt == null) return false;
+      return t.completedAt!.year == now.year &&
+          t.completedAt!.month == now.month &&
+          t.completedAt!.day == now.day;
+    }).fold<double>(0.0, (sum, t) => sum + t.completedPomodoros);
+
+    final dates = List<String>.from(streakData.activeDates);
+    if (todayPomodoros >= settings.dailyGoalPomodoros && !dates.contains(todayKey)) {
+      dates.add(todayKey);
+    }
+
+    dates.sort();
+    int current = 0;
+    int longest = streakData.longestStreak;
+
+    if (dates.isNotEmpty) {
+      final dateObjects = dates.map((d) => DateTime.parse(d)).toList();
+      int streak = 1;
+      int maxStreak = 1;
+
+      for (int i = 1; i < dateObjects.length; i++) {
+        final diff = dateObjects[i].difference(dateObjects[i - 1]).inDays;
+        if (diff == 1) {
+          streak++;
+        } else if (diff > 1) {
+          streak = 1;
+        }
+        if (streak > maxStreak) maxStreak = streak;
+      }
+
+      final latest = dateObjects.last;
+      final daysFromNow = DateTime(now.year, now.month, now.day).difference(DateTime(latest.year, latest.month, latest.day)).inDays;
+      if (daysFromNow <= 1) {
+        current = streak;
+      } else {
+        current = 0;
+      }
+
+      if (maxStreak > longest) longest = maxStreak;
+    }
+
+    streakData = StreakData(
+      currentStreak: current,
+      longestStreak: longest,
+      activeDates: dates,
+    );
+    _storageService.saveStreakData(streakData);
+  }
+
+  void updateDailyGoal(int newGoal) {
+    settings.dailyGoalPomodoros = newGoal;
+    saveSettings();
+    recalculateStreak();
     notifyListeners();
   }
 
   Future<void> saveTasks() async {
     await _storageService.saveTasks(tasks);
+    recalculateStreak();
   }
 
   Future<void> saveProjects() async {
@@ -57,6 +130,7 @@ class AppController extends ChangeNotifier {
   void updateSettings(AppSettings newSettings) {
     settings = newSettings;
     saveSettings();
+    recalculateStreak();
     notifyListeners();
   }
 

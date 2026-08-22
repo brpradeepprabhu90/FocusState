@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/app_settings.dart';
 import '../models/project.dart';
 import '../models/task.dart';
+import '../models/streak_badge.dart';
 
 class StorageService {
   static const String _tasksKey = 'flowstate_tasks';
@@ -11,6 +12,7 @@ class StorageService {
   static const String _settingsKey = 'flowstate_settings';
   static const String _blockedAppsKey = 'flowstate_blocked_app_states';
   static const String _themeModeKey = 'flowstate_theme_mode';
+  static const String _streakKey = 'flowstate_streak_data';
 
   Future<void> saveTasks(List<Task> tasks) async {
     final prefs = await SharedPreferences.getInstance();
@@ -91,5 +93,21 @@ class StorageService {
       );
     }
     return ThemeMode.dark;
+  }
+
+  Future<void> saveStreakData(StreakData streakData) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = jsonEncode(streakData.toJson());
+    await prefs.setString(_streakKey, jsonString);
+  }
+
+  Future<StreakData> loadStreakData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString(_streakKey);
+    if (jsonString != null) {
+      final Map<String, dynamic> jsonMap = jsonDecode(jsonString);
+      return StreakData.fromJson(jsonMap);
+    }
+    return StreakData();
   }
 }

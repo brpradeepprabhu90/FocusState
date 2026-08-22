@@ -1,187 +1,267 @@
 import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
+import '../models/app_settings.dart';
 import '../models/project.dart';
 import '../models/task.dart';
+import '../models/streak_badge.dart';
 
-// Widgets
-import '../widgets/stat_card.dart';
-import '../widgets/completion_progress_bar.dart';
-import '../widgets/expandable_completed_card.dart';
-import '../widgets/project_pending_card.dart';
+import '../services/report_exporter_service.dart';
+import '../widgets/daily_goal_modal.dart';
+import '../widgets/focus_calendar_widget.dart';
+import '../widgets/streak_badge_card.dart';
 
 class StatsProgressTab extends StatelessWidget {
   final List<Project> projects;
   final List<Task> tasks;
+  final AppSettings settings;
+  final StreakData streakData;
+  final ValueChanged<int> onUpdateDailyGoal;
 
-  const StatsProgressTab({Key? key, required this.projects, required this.tasks}) : super(key: key);
+  const StatsProgressTab({
+    Key? key,
+    required this.projects,
+    required this.tasks,
+    required this.settings,
+    required this.streakData,
+    required this.onUpdateDailyGoal,
+  }) : super(key: key);
+
+  void _showSetGoalModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => DailyGoalModal(
+        currentGoalPomodoros: settings.dailyGoalPomodoros,
+        onSaveGoal: onUpdateDailyGoal,
+      ),
+    );
+  }
+
+  void _exportCsvReport(BuildContext context) async {
+    final success = await ReportExporterService.exportCsvReport(
+      context: context,
+      projects: projects,
+      tasks: tasks,
+      currentStreak: streakData.currentStreak,
+      dailyGoalPomodoros: settings.dailyGoalPomodoros,
+    );
+
+    if (context.mounted) {
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Productivity CSV report exported successfully!'),
+              ],
+            ),
+            backgroundColor: AppConstants.accentEmerald,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final completedTasks = tasks.where((t) => t.isCompleted).toList();
-    final pendingTasks = tasks.where((t) => !t.isCompleted).toList();
-
-    final totalCount = tasks.length;
-    final completedCount = completedTasks.length;
-    final pendingCount = pendingTasks.length;
-    final completionRatio = totalCount > 0 ? completedCount / totalCount : 0.0;
-
-    final totalMinutesSpent = tasks.fold<int>(0, (sum, t) => sum + (t.timeSpentSeconds ~/ 60));
-
-    // Completed Grouping: Today, Current Month, Current Year
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final now = DateTime.now();
 
-    final todayCompleted = completedTasks.where((t) {
+    final todayPomodoros = tasks.where((t) {
       if (t.completedAt == null) return false;
       return t.completedAt!.year == now.year &&
           t.completedAt!.month == now.month &&
           t.completedAt!.day == now.day;
-    }).toList();
+    }).fold<double>(0.0, (sum, t) => sum + t.completedPomodoros);
 
-    final monthCompleted = completedTasks.where((t) {
-      if (t.completedAt == null) return false;
-      return t.completedAt!.year == now.year && t.completedAt!.month == now.month;
-    }).toList();
+    final goalTarget = settings.dailyGoalPomodoros.toDouble();
+    final goalProgress = goalTarget > 0 ? (todayPomodoros / goalTarget).clamp(0.0, 1.0) : 0.0;
+    final isGoalAchieved = todayPomodoros >= goalTarget;
 
-    final yearCompleted = completedTasks.where((t) {
-      if (t.completedAt == null) return false;
-      return t.completedAt!.year == now.year;
-    }).toList();
+    final totalCompletedTasks = tasks.where((t) => t.isCompleted).length;
+    final totalFocusHours = tasks.fold<int>(0, (sum, t) => sum + t.timeSpentSeconds) / 3600.0;
 
-    return Padding(
+    final badges = FocusBadge.getDefaultBadges(
+      currentStreak: streakData.currentStreak,
+      totalTasksCompleted: totalCompletedTasks,
+      totalFocusHours: totalFocusHours,
+      hasSetGoal: settings.dailyGoalPomodoros > 0,
+    );
+
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header Section with Title & Export Actions
           Row(
-            children: const [
-              Icon(Icons.insights, color: AppConstants.primaryIndigo, size: 28),
-              SizedBox(width: 8),
-              Text(
-                'Progress & Performance',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Row(
+                  children: const [
+                    Icon(Icons.calendar_month, color: AppConstants.primaryIndigo, size: 28),
+                    SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'Focus Calendar',
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.track_changes, size: 16),
+                    label: const Text('Set Goal'),
+                    onPressed: () => _showSetGoalModal(context),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.download, size: 16),
+                    label: const Text('CSV Report'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppConstants.primaryIndigo,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: () => _exportCsvReport(context),
+                  ),
+                ],
               ),
             ],
           ),
           const SizedBox(height: 4),
-          const Text('Overview of completed vs pending tasks', style: TextStyle(color: Colors.grey)),
+          const Text('Track daily goals, streaks, and milestone achievements', style: TextStyle(color: Colors.grey)),
           const SizedBox(height: 20),
 
-          // Overview Cards Grid
-          Row(
-            children: [
-              Expanded(
-                child: StatCard(
-                  title: 'Completed',
-                  value: '$completedCount',
-                  icon: Icons.task_alt,
-                  color: AppConstants.accentEmerald,
-                ),
+          // Daily Goal Progress Card
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: isDark ? AppConstants.darkSurface : AppConstants.lightSurface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isGoalAchieved ? AppConstants.accentEmerald : AppConstants.primaryIndigo.withValues(alpha: 0.2),
+                width: 2,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: StatCard(
-                  title: 'Pending',
-                  value: '$pendingCount',
-                  icon: Icons.pending_actions,
-                  color: AppConstants.warningAmber,
+              boxShadow: isDark
+                  ? []
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          isGoalAchieved ? Icons.verified : Icons.flag,
+                          color: isGoalAchieved ? AppConstants.accentEmerald : AppConstants.primaryIndigo,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text('Today\'s Daily Goal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: (isGoalAchieved ? AppConstants.accentEmerald : AppConstants.primaryIndigo).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Target: ${settings.dailyGoalPomodoros} Poms (${settings.dailyGoalPomodoros * 25}m)',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: isGoalAchieved ? AppConstants.accentEmerald : AppConstants.primaryIndigo,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: StatCard(
-                  title: 'Total Time',
-                  value: '${totalMinutesSpent}m',
-                  icon: Icons.timer,
-                  color: AppConstants.primaryIndigo,
+                const SizedBox(height: 14),
+
+                // Goal Progress Bar
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: goalProgress,
+                    minHeight: 12,
+                    backgroundColor: isDark ? Colors.white10 : Colors.black12,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      isGoalAchieved ? AppConstants.accentEmerald : AppConstants.primaryIndigo,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 10),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Completed Today: ${todayPomodoros.toStringAsFixed(1)} / ${settings.dailyGoalPomodoros} Pomodoros',
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
+                    if (isGoalAchieved)
+                      Row(
+                        children: const [
+                          Icon(Icons.local_fire_department, size: 16, color: AppConstants.accentEmerald),
+                          SizedBox(width: 4),
+                          Text(
+                            'Goal Achieved!',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppConstants.accentEmerald,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
 
-          // Completion Progress Bar
-          CompletionProgressBar(completionRatio: completionRatio),
+          // Streak & Milestones Section
+          StreakBadgeCard(
+            streakData: streakData,
+            badges: badges,
+          ),
           const SizedBox(height: 24),
 
-          // Detailed Completed & Pending Lists
-          Expanded(
-            child: DefaultTabController(
-              length: 2,
-              child: Column(
-                children: [
-                  TabBar(
-                    indicatorColor: AppConstants.primaryIndigo,
-                    labelColor: AppConstants.accentIndigoSoft,
-                    unselectedLabelColor: Colors.grey,
-                    tabs: [
-                      Tab(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.check_circle_outline, size: 16),
-                            const SizedBox(width: 6),
-                            Text('Completed ($completedCount)'),
-                          ],
-                        ),
-                      ),
-                      Tab(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.folder_copy_outlined, size: 16),
-                            const SizedBox(width: 6),
-                            Text('Pending ($pendingCount)'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: TabBarView(
-                      children: [
-                        // COMPLETED: Interactive Expandable Cards with Icons
-                        ListView(
-                          children: [
-                            ExpandableCompletedCard(
-                              title: 'Today',
-                              groupIcon: Icons.today,
-                              count: todayCompleted.length,
-                              color: AppConstants.accentEmerald,
-                              tasks: todayCompleted,
-                            ),
-                            const SizedBox(height: 12),
-                            ExpandableCompletedCard(
-                              title: 'This Month',
-                              groupIcon: Icons.calendar_month,
-                              count: monthCompleted.length,
-                              color: AppConstants.primaryIndigo,
-                              tasks: monthCompleted,
-                            ),
-                            const SizedBox(height: 12),
-                            ExpandableCompletedCard(
-                              title: 'This Year',
-                              groupIcon: Icons.calendar_today,
-                              count: yearCompleted.length,
-                              color: AppConstants.warningAmber,
-                              tasks: yearCompleted,
-                            ),
-                          ],
-                        ),
+          // Interactive Monthly Calendar View
+          const Text(
+            'Monthly Activity Calendar',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          const Text('Days highlighted in green indicating goal met (🔥)', style: TextStyle(fontSize: 12, color: Colors.grey)),
+          const SizedBox(height: 12),
 
-                        // PENDING: Grouped by Projects with Icons
-                        ListView(
-                          children: projects.map((proj) {
-                            final projPending = pendingTasks.where((t) => t.projectId == proj.id).toList();
-                            return ProjectPendingCard(project: proj, pendingTasks: projPending);
-                          }).toList(),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          FocusCalendarWidget(
+            activeGoalDates: streakData.activeDates,
+            tasks: tasks,
+            dailyGoalPomodoros: settings.dailyGoalPomodoros,
           ),
         ],
       ),

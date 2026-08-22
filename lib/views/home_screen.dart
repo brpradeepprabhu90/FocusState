@@ -126,6 +126,9 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
           StatsProgressTab(
             projects: _controller.projects,
             tasks: _controller.tasks,
+            settings: _controller.settings,
+            streakData: _controller.streakData,
+            onUpdateDailyGoal: _controller.updateDailyGoal,
           ),
         ];
 
@@ -177,9 +180,9 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
                 label: '2. Focus Timer',
               ),
               NavigationDestination(
-                icon: Icon(Icons.insights),
-                selectedIcon: Icon(Icons.insights, color: AppConstants.accentIndigoSoft),
-                label: '3. Stats & Logs',
+                icon: Icon(Icons.calendar_month_outlined),
+                selectedIcon: Icon(Icons.calendar_month, color: AppConstants.accentIndigoSoft),
+                label: '3. Calendar & Streaks',
               ),
             ],
           ),
