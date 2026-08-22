@@ -268,7 +268,7 @@ class StatsProgressTab extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Today\'s Focus Flow: ${todayPomodoros.toStringAsFixed(1)} Sessions Nurtured 🌿',
+                      'Today\'s Focus Flow: ${todayPomodoros % 1 == 0 ? todayPomodoros.toInt() : todayPomodoros.toStringAsFixed(1)} Sessions Nurtured 🌿',
                       style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                     ),
                     if (isGoalAchieved)

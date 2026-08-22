@@ -58,7 +58,7 @@ class _DailyGoalModalState extends State<DailyGoalModal> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Choose how many Pomodoro sessions (25m each) you want to complete each day to maintain your streak.',
+            'Choose how many Focus Sessions (25m each) you want to complete each day to nurture your garden.',
             style: TextStyle(fontSize: 13, color: Colors.grey),
           ),
           const SizedBox(height: 20),
@@ -73,7 +73,7 @@ class _DailyGoalModalState extends State<DailyGoalModal> {
             items: List.generate(12, (index) => index + 1)
                 .map((count) => DropdownMenuItem(
                       value: count,
-                      child: Text('$count Pomodoro${count > 1 ? 's' : ''} (${count * 25} minutes)'),
+                      child: Text('$count Focus Session${count > 1 ? 's' : ''} (${count * 25} minutes)'),
                     ))
                 .toList(),
             onChanged: (val) {
