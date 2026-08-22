@@ -75,9 +75,10 @@ class AppController extends ChangeNotifier {
 
       for (int i = 1; i < dateObjects.length; i++) {
         final diff = dateObjects[i].difference(dateObjects[i - 1]).inDays;
-        if (diff == 1) {
+        // Forgiving Shame-Free Streak Logic: Allow up to 2 rest days without resetting streak!
+        if (diff <= 3) {
           streak++;
-        } else if (diff > 1) {
+        } else {
           streak = 1;
         }
         if (streak > maxStreak) maxStreak = streak;
@@ -85,7 +86,8 @@ class AppController extends ChangeNotifier {
 
       final latest = dateObjects.last;
       final daysFromNow = DateTime(now.year, now.month, now.day).difference(DateTime(latest.year, latest.month, latest.day)).inDays;
-      if (daysFromNow <= 1) {
+      // Allow up to 3 days grace period for Rest Days
+      if (daysFromNow <= 3) {
         current = streak;
       } else {
         current = 0;
@@ -104,6 +106,18 @@ class AppController extends ChangeNotifier {
 
   void updateDailyGoal(int newGoal) {
     settings.dailyGoalPomodoros = newGoal;
+    saveSettings();
+    recalculateStreak();
+    notifyListeners();
+  }
+
+  void updateEnergyLevel(String level) {
+    settings.energyLevel = level;
+    if (level == 'Low') {
+      settings.dailyGoalPomodoros = 2; // Calibrate expectations for low energy / burnout days
+    } else if (level == 'High') {
+      settings.dailyGoalPomodoros = 5;
+    }
     saveSettings();
     recalculateStreak();
     notifyListeners();

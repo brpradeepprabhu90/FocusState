@@ -148,22 +148,33 @@ class TimerDisplay extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: (isTimerRunning ? AppConstants.accentEmerald : AppConstants.primaryIndigo).withValues(alpha: 0.2),
+                      color: (secondsLeft <= 0 && isTimerRunning
+                              ? AppConstants.primaryIndigo
+                              : (isTimerRunning ? AppConstants.accentEmerald : AppConstants.primaryIndigo))
+                          .withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          isTimerRunning ? Icons.play_arrow : Icons.bolt,
+                          secondsLeft <= 0 && isTimerRunning
+                              ? Icons.auto_awesome
+                              : (isTimerRunning ? Icons.play_arrow : Icons.bolt),
                           size: 14,
-                          color: isTimerRunning ? AppConstants.accentEmerald : AppConstants.accentIndigoSoft,
+                          color: secondsLeft <= 0 && isTimerRunning
+                              ? AppConstants.primaryIndigo
+                              : (isTimerRunning ? AppConstants.accentEmerald : AppConstants.accentIndigoSoft),
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          isTimerRunning ? 'IN FOCUS' : currentStage.toUpperCase(),
+                          secondsLeft <= 0 && isTimerRunning
+                              ? 'HYPERFOCUS MODE ✨'
+                              : (isTimerRunning ? 'IN FOCUS' : currentStage.toUpperCase()),
                           style: TextStyle(
-                            color: isTimerRunning ? AppConstants.accentEmerald : AppConstants.accentIndigoSoft,
+                            color: secondsLeft <= 0 && isTimerRunning
+                                ? AppConstants.primaryIndigo
+                                : (isTimerRunning ? AppConstants.accentEmerald : AppConstants.accentIndigoSoft),
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),

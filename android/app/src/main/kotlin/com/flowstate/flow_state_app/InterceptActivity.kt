@@ -12,12 +12,11 @@ import android.widget.TextView
 
 class InterceptActivity : Activity() {
 
-    private val quotes = listOf(
-        "\"Lost time is never found again.\" - Benjamin Franklin",
-        "\"Time is what we want most, but what we use worst.\" - William Penn",
-        "\"The key is in not spending time, but in investing it.\" - Stephen R. Covey",
-        "\"Don't be fooled by the calendar. There are only as many days in the year as you make use of.\" - Charles Richards",
-        "\"Ordinary people think merely of spending time, great people think of using it.\" - Arthur Schopenhauer"
+    private val mindfulPrompts = listOf(
+        "Take a deep breath 🌬️\nAre you choosing to scroll right now?",
+        "Mindful Speed Bump 🧘\nPause for a second before continuing.",
+        "Reflect & Re-center 🧠\nIs this task helping your focus today?",
+        "Breathe in... Breathe out 🌸\nIntention over subconscious habit."
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,24 +25,24 @@ class InterceptActivity : Activity() {
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
-            setBackgroundColor(Color.parseColor("#121212")) // Dark theme
+            setBackgroundColor(Color.parseColor("#0F172A")) // Calming slate dark theme
             setPadding(64, 64, 64, 64)
         }
 
-        val quoteTextView = TextView(this).apply {
-            text = quotes.random()
-            setTextColor(Color.parseColor("#818CF8")) // Indigo
+        val promptTextView = TextView(this).apply {
+            text = mindfulPrompts.random()
+            setTextColor(Color.parseColor("#818CF8")) // Indigo soft
             textSize = 22f
-            setTypeface(null, Typeface.ITALIC)
+            setTypeface(null, Typeface.BOLD)
             gravity = Gravity.CENTER
-            setPadding(0, 0, 0, 64)
+            setPadding(0, 0, 0, 48)
         }
-        layout.addView(quoteTextView)
+        layout.addView(promptTextView)
 
         val timerTextView = TextView(this).apply {
-            text = "Redirecting in 5..."
+            text = "Mindful Pause: 5s remaining..."
             setTextColor(Color.WHITE)
-            textSize = 18f
+            textSize = 16f
             gravity = Gravity.CENTER
         }
         layout.addView(timerTextView)
@@ -52,7 +51,8 @@ class InterceptActivity : Activity() {
 
         object : CountDownTimer(5000, 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                timerTextView.text = "Redirecting in ${millisUntilFinished / 1000}..."
+                val seconds = (millisUntilFinished / 1000) + 1
+                timerTextView.text = "Mindful Pause: ${seconds}s remaining..."
             }
 
             override fun onFinish() {
@@ -69,6 +69,6 @@ class InterceptActivity : Activity() {
     }
     
     override fun onBackPressed() {
-        // Prevent back button during the 5 second penalty
+        // Prevent back button bypass during mindful pause
     }
 }

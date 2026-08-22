@@ -9,6 +9,8 @@ import '../controllers/app_controller.dart';
 
 import 'permission_onboarding_dialog.dart';
 
+import '../widgets/energy_selector_widget.dart';
+
 class MainHomeScreen extends StatefulWidget {
   final ThemeMode currentThemeMode;
   final Function(ThemeMode) onThemeChanged;
@@ -157,6 +159,10 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             ),
             elevation: 0,
             actions: [
+              EnergySelectorWidget(
+                currentEnergyLevel: _controller.settings.energyLevel,
+                onEnergyChanged: _controller.updateEnergyLevel,
+              ),
               IconButton(
                 icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode, color: Colors.amber),
                 tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
