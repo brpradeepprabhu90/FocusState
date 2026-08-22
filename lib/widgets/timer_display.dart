@@ -77,10 +77,10 @@ class TimerDisplay extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isOvertime ? 'OVERTIME IN PROGRESS' : 'ACTIVE FOCUS TASK',
+                      isTimerRunning ? 'FOCUS SESSION IN PROGRESS' : 'ACTIVE FOCUS TASK',
                       style: TextStyle(
                         fontSize: 11,
-                        color: isOvertime ? AppConstants.errorRed : Colors.grey,
+                        color: isTimerRunning ? AppConstants.accentEmerald : Colors.grey,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -128,7 +128,7 @@ class TimerDisplay extends StatelessWidget {
                   strokeWidth: 12,
                   backgroundColor: isDark ? Colors.white10 : Colors.black12,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    isOvertime ? AppConstants.errorRed : AppConstants.primaryIndigo,
+                    isTimerRunning ? AppConstants.accentEmerald : AppConstants.primaryIndigo,
                   ),
                 ),
               ),
@@ -138,36 +138,32 @@ class TimerDisplay extends StatelessWidget {
                   Text(
                     _timeString,
                     style: TextStyle(
-                      fontSize: isOvertime ? 44 : 50,
+                      fontSize: 50,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 2,
-                      color: isOvertime
-                          ? AppConstants.errorRed
-                          : (isDark ? Colors.white : AppConstants.darkBackground),
+                      color: isDark ? Colors.white : AppConstants.darkBackground,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: isOvertime
-                          ? AppConstants.errorRed.withOpacity(0.2)
-                          : AppConstants.primaryIndigo.withOpacity(0.2),
+                      color: (isTimerRunning ? AppConstants.accentEmerald : AppConstants.primaryIndigo).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          isOvertime ? Icons.warning : Icons.bolt,
+                          isTimerRunning ? Icons.play_arrow : Icons.bolt,
                           size: 14,
-                          color: isOvertime ? AppConstants.errorRed : AppConstants.accentIndigoSoft,
+                          color: isTimerRunning ? AppConstants.accentEmerald : AppConstants.accentIndigoSoft,
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          isOvertime ? 'OVERTIME WORK' : currentStage.toUpperCase(),
+                          isTimerRunning ? 'IN FOCUS' : currentStage.toUpperCase(),
                           style: TextStyle(
-                            color: isOvertime ? AppConstants.errorRed : AppConstants.accentIndigoSoft,
+                            color: isTimerRunning ? AppConstants.accentEmerald : AppConstants.accentIndigoSoft,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
