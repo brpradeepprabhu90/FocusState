@@ -108,6 +108,17 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             onAddProject: _controller.addNewProject,
             onUpdateProject: _controller.updateProject,
             onDeleteProject: _controller.deleteProject,
+            onQuickStartFocus: () {
+              if (!_controller.isTimerRunning) {
+                if (_controller.tasks.isNotEmpty && _controller.activeTask == null) {
+                  final pending = _controller.tasks.where((t) => !t.isCompleted).firstOrNull ?? _controller.tasks.first;
+                  _controller.toggleTaskTimer(pending);
+                } else {
+                  _controller.resumeTimer();
+                }
+              }
+              _controller.setTabIndex(1);
+            },
           ),
           TimerTab(
             activeTask: _controller.activeTask,

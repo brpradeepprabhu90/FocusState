@@ -62,6 +62,19 @@
                 android:value="Pomodoro Focus Timer" />
         </service>
 
+        <!-- FlowState Android Home Screen Launcher Widget -->
+        <receiver
+            android:name=".FlowStateWidgetProvider"
+            android:exported="true"
+            android:label="FlowState Quick Focus">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/flow_state_widget_info" />
+        </receiver>
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

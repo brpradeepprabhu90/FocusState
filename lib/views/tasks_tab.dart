@@ -8,6 +8,7 @@ import '../widgets/add_task_modal.dart';
 // Extracted Widgets
 import '../widgets/project_filter_dropdown.dart';
 import '../widgets/task_list_item.dart';
+import '../widgets/quick_focus_widget.dart';
 
 class TasksAndRemindersTab extends StatefulWidget {
   final List<Project> projects;
@@ -21,6 +22,7 @@ class TasksAndRemindersTab extends StatefulWidget {
   final Function(Project) onAddProject;
   final Function(Project)? onUpdateProject;
   final Function(String)? onDeleteProject;
+  final VoidCallback? onQuickStartFocus;
 
   const TasksAndRemindersTab({
     Key? key,
@@ -35,6 +37,7 @@ class TasksAndRemindersTab extends StatefulWidget {
     required this.onAddProject,
     this.onUpdateProject,
     this.onDeleteProject,
+    this.onQuickStartFocus,
   }) : super(key: key);
 
   @override
@@ -169,6 +172,14 @@ class _TasksAndRemindersTabState extends State<TasksAndRemindersTab> {
             ],
           ),
           const SizedBox(height: 16),
+
+          // In-App Quick Start Focus Launcher Widget
+          if (widget.onQuickStartFocus != null)
+            QuickFocusWidget(
+              activeTask: widget.activeTask,
+              isTimerRunning: widget.isTimerRunning,
+              onQuickStartFocus: widget.onQuickStartFocus!,
+            ),
 
           // Project Filter Dropdown & Controls
           ProjectFilterDropdown(
