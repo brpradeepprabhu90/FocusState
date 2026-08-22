@@ -154,23 +154,12 @@ class StatsProgressTab extends StatelessWidget {
                     label: const Text('Set Goal'),
                     onPressed: () => _showSetGoalModal(context),
                   ),
-                  const SizedBox(width: 8),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.download, size: 16),
-                    label: const Text('CSV Report'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppConstants.primaryIndigo,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    onPressed: () => _exportCsvReport(context),
-                  ),
                 ],
               ),
             ],
           ),
           const SizedBox(height: 4),
-          const Text('Track daily goals, streaks, and milestone achievements', style: TextStyle(color: Colors.grey)),
+          const Text('Nurture your focus, track garden vitality, and celebrate growth 🌸', style: TextStyle(color: Colors.grey)),
           const SizedBox(height: 20),
 
           // Focus Time Breakdown Cards (Today, This Week, Total)
@@ -235,11 +224,11 @@ class StatsProgressTab extends StatelessWidget {
                     Row(
                       children: [
                         Icon(
-                          isGoalAchieved ? Icons.verified : Icons.flag,
+                          isGoalAchieved ? Icons.local_florist : Icons.spa,
                           color: isGoalAchieved ? AppConstants.accentEmerald : AppConstants.primaryIndigo,
                         ),
                         const SizedBox(width: 8),
-                        const Text('Today\'s Daily Goal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const Text('Today\'s Daily Focus', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                       ],
                     ),
                     Container(
@@ -249,7 +238,7 @@ class StatsProgressTab extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        'Target: ${settings.dailyGoalPomodoros} Poms (${settings.dailyGoalPomodoros * 25}m)',
+                        'Target: ${settings.dailyGoalPomodoros} Sessions (${settings.dailyGoalPomodoros * 25}m)',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
@@ -279,16 +268,16 @@ class StatsProgressTab extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Completed Today: ${todayPomodoros.toStringAsFixed(1)} / ${settings.dailyGoalPomodoros} Pomodoros',
+                      'Today\'s Focus Flow: ${todayPomodoros.toStringAsFixed(1)} Sessions Nurtured 🌿',
                       style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                     ),
                     if (isGoalAchieved)
                       Row(
                         children: const [
-                          Icon(Icons.local_fire_department, size: 16, color: AppConstants.accentEmerald),
+                          Icon(Icons.local_florist, size: 16, color: AppConstants.accentEmerald),
                           SizedBox(width: 4),
                           Text(
-                            'Goal Achieved!',
+                            'Goal Nurtured! 🌸',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -310,7 +299,7 @@ class StatsProgressTab extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
-          const Text('Days highlighted in green indicating goal met (🔥)', style: TextStyle(fontSize: 12, color: Colors.grey)),
+          const Text('Days highlighted in green indicating focus nurtured 🌿', style: TextStyle(fontSize: 12, color: Colors.grey)),
           const SizedBox(height: 12),
 
           FocusCalendarWidget(

@@ -87,15 +87,15 @@ class _StreakBadgeCardState extends State<StreakBadgeCard> {
                     Row(
                       children: [
                         Text(
-                          '${widget.streakData.currentStreak}-Day Garden Streak',
+                          'Garden Vitality: ${widget.streakData.currentStreak} Days Nourished',
                           style: const TextStyle(
-                            fontSize: 18,
+                            fontSize: 17,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
                         const SizedBox(width: 6),
-                        const Text('🔥', style: TextStyle(fontSize: 16)),
+                        const Text('🌿', style: TextStyle(fontSize: 16)),
                       ],
                     ),
                     const SizedBox(height: 2),
