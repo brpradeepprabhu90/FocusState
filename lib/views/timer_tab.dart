@@ -12,6 +12,7 @@ import '../models/task.dart';
 // Services
 import '../services/audio_service.dart';
 import '../services/app_blocker_service.dart';
+import '../services/storage_service.dart';
 
 // Widgets
 import '../widgets/timer_display.dart';
@@ -47,6 +48,7 @@ class TimerTab extends StatefulWidget {
 class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
   final AudioService _audioService = AudioService();
   final AppBlockerService _appBlockerService = AppBlockerService();
+  final StorageService _storageService = StorageService();
 
   int _secondsLeft = 25 * 60;
   bool _hasNotifiedEnd = false;
@@ -71,6 +73,7 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     _appsToBlock = List.from(AppConstants.defaultAppsToBlock);
 
     WidgetsBinding.instance.addObserver(this);
+    _loadAppBlockerStates();
     _loadInstalledApps();
     
     if (Platform.isAndroid || Platform.isIOS) {
@@ -78,13 +81,13 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
         if (!mounted || event == null) return;
         setState(() {
           _secondsLeft = event['secondsLeft'] ?? _secondsLeft;
-          _hasNotifiedEnd = event['hasNotifiedCompletion'] ?? false;
           if (widget.activeTask != null && widget.isTimerRunning) {
             final now = DateTime.now();
             if (_lastTickTime != null) {
               final elapsedSinceLastTick = now.difference(_lastTickTime!).inSeconds;
               if (elapsedSinceLastTick > 0 && elapsedSinceLastTick < 5) {
                  widget.activeTask!.timeSpentSeconds += elapsedSinceLastTick;
+                 widget.activeTask!.updateCalculatedPomodoros();
               }
             }
             _lastTickTime = now;
@@ -98,7 +101,11 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
           HapticFeedback.heavyImpact();
         }
         if (widget.activeTask != null) {
-          widget.activeTask!.completedPomodoros++;
+          if (event != null && event.containsKey('completedPomodoros')) {
+            widget.activeTask!.completedPomodoros = (event['completedPomodoros'] as num).toDouble();
+          } else {
+            widget.activeTask!.updateCalculatedPomodoros();
+          }
         }
         _triggerCompletionNotification();
       });
@@ -155,6 +162,26 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _loadAppBlockerStates() async {
+    final savedStates = await _storageService.loadBlockedAppStates();
+    if (savedStates.isNotEmpty && mounted) {
+      setState(() {
+        for (var app in _appsToBlock) {
+          if (savedStates.containsKey(app.packageName)) {
+            app.isBlocked = savedStates[app.packageName]!;
+          }
+        }
+      });
+    }
+  }
+
+  Future<void> _saveAppBlockerStates() async {
+    final Map<String, bool> states = {
+      for (var app in _appsToBlock) app.packageName: app.isBlocked
+    };
+    await _storageService.saveBlockedAppStates(states);
+  }
+
   Future<void> _loadInstalledApps() async {
     final apps = await _appBlockerService.loadInstalledApps();
     if (apps.isNotEmpty && mounted) {
@@ -171,6 +198,11 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     final bool taskChanged = widget.activeTask?.id != oldWidget.activeTask?.id;
     final bool settingsChanged = widget.settings.defaultPomodoroMinutes != oldWidget.settings.defaultPomodoroMinutes;
     final bool runningChanged = widget.isTimerRunning != oldWidget.isTimerRunning;
+    final bool blockerSettingChanged = widget.settings.defaultAppBlockerEnabled != oldWidget.settings.defaultAppBlockerEnabled;
+
+    if (blockerSettingChanged) {
+      _isAppBlockerEnabled = widget.settings.defaultAppBlockerEnabled;
+    }
 
     if (taskChanged || settingsChanged) {
       _resetTimerForTask();
@@ -287,10 +319,14 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
         await service.startService();
       }
       
+      final sessionMins = widget.activeTask?.durationMinutes ?? widget.settings.defaultPomodoroMinutes;
       service.invoke('startTimer', {
         'secondsLeft': _secondsLeft,
         'seconds': _secondsLeft,
+        'sessionDurationSeconds': sessionMins * 60,
         'taskTitle': widget.activeTask?.title ?? 'Default Focus Session',
+        'estimatedPomodoros': widget.activeTask?.estimatedPomodoros ?? 1,
+        'completedPomodoros': widget.activeTask?.completedPomodoros ?? 0.0,
         'isRestoring': _isRestoring,
       });
       _isRestoring = false;
@@ -302,11 +338,13 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
             _secondsLeft--;
             if (widget.activeTask != null) {
               widget.activeTask!.timeSpentSeconds++;
+              widget.activeTask!.updateCalculatedPomodoros();
             }
-            if (_secondsLeft <= 0 && !_hasNotifiedEnd) {
-              _hasNotifiedEnd = true;
-              if (widget.activeTask != null) {
-                widget.activeTask!.completedPomodoros++;
+            if (_secondsLeft <= 0) {
+              final sessionMins = widget.activeTask?.durationMinutes ?? widget.settings.defaultPomodoroMinutes;
+              _secondsLeft = sessionMins * 60;
+              if (widget.settings.hapticFeedbackEnabled) {
+                HapticFeedback.heavyImpact();
               }
               _triggerCompletionNotification();
             }
@@ -374,18 +412,21 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
     setState(() {
       _appsToBlock[index].isBlocked = !_appsToBlock[index].isBlocked;
     });
+    _saveAppBlockerStates();
   }
 
   void _handleBlockAll() {
     setState(() {
       for (var app in _appsToBlock) app.isBlocked = true;
     });
+    _saveAppBlockerStates();
   }
 
   void _handleAllowAll() {
     setState(() {
       for (var app in _appsToBlock) app.isBlocked = false;
     });
+    _saveAppBlockerStates();
   }
 
   @override

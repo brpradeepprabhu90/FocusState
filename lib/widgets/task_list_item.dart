@@ -96,7 +96,7 @@ class TaskListItem extends StatelessWidget {
                 children: [
                   Icon(Icons.format_list_numbered, size: 14, color: AppConstants.accentIndigoSoft),
                   const SizedBox(width: 4),
-                  Text('${task.completedPomodoros}/${task.estimatedPomodoros}',
+                  Text('${task.formattedCompletedPomodoros}/${task.estimatedPomodoros}',
                       style: const TextStyle(color: AppConstants.accentIndigoSoft, fontSize: 12)),
                 ],
               ),

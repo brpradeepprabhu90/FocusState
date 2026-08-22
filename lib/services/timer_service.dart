@@ -63,12 +63,11 @@ void onStart(ServiceInstance service) async {
 
   Timer? timer;
   int secondsLeft = 0;
+  int sessionDurationSeconds = 25 * 60;
   DateTime? targetEndTime;
-  bool isOvertime = false;
   String taskTitle = "Focus Session";
   int estimatedPomodoros = 1;
-  int completedPomodoros = 0;
-  bool hasNotifiedCompletion = false;
+  double completedPomodoros = 0.0;
 
   service.on('stopService').listen((event) {
     timer?.cancel();
@@ -83,18 +82,18 @@ void onStart(ServiceInstance service) async {
       targetEndTime = DateTime.fromMillisecondsSinceEpoch(payload['targetEndTimeMs']);
       taskTitle = payload['taskTitle'] ?? taskTitle;
       estimatedPomodoros = payload['estimatedPomodoros'] ?? estimatedPomodoros;
-      completedPomodoros = payload['completedPomodoros'] ?? completedPomodoros;
-      hasNotifiedCompletion = payload['hasNotifiedCompletion'] ?? false;
+      completedPomodoros = (payload['completedPomodoros'] as num?)?.toDouble() ?? completedPomodoros;
+      sessionDurationSeconds = payload['sessionDurationSeconds'] ?? (25 * 60);
       
       final now = DateTime.now();
       secondsLeft = targetEndTime!.difference(now).inSeconds;
     } else {
       secondsLeft = payload['secondsLeft'] ?? payload['seconds'] ?? (25 * 60);
+      sessionDurationSeconds = secondsLeft;
       taskTitle = payload['taskTitle'] ?? "Focus Session";
       estimatedPomodoros = payload['estimatedPomodoros'] ?? 1;
-      completedPomodoros = payload['completedPomodoros'] ?? 0;
+      completedPomodoros = (payload['completedPomodoros'] as num?)?.toDouble() ?? 0.0;
       targetEndTime = DateTime.now().add(Duration(seconds: secondsLeft));
-      hasNotifiedCompletion = false;
     }
 
     timer?.cancel();
@@ -102,18 +101,60 @@ void onStart(ServiceInstance service) async {
     timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       final now = DateTime.now();
       secondsLeft = targetEndTime!.difference(now).inSeconds;
-      isOvertime = secondsLeft < 0;
+
+      if (secondsLeft <= 0) {
+        completedPomodoros += 1.0;
+        targetEndTime = DateTime.now().add(Duration(seconds: sessionDurationSeconds));
+        secondsLeft = sessionDurationSeconds;
+
+        // Trigger high priority notification for completion
+        const AndroidNotificationChannel completionChannel = AndroidNotificationChannel(
+          'timer_completion',
+          'Timer Completion Alerts',
+          importance: Importance.high,
+        );
+
+        await flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>()
+            ?.createNotificationChannel(completionChannel);
+
+        final pomodoroLabel = completedPomodoros == completedPomodoros.toInt()
+            ? completedPomodoros.toInt().toString()
+            : completedPomodoros.toStringAsFixed(1);
+
+        flutterLocalNotificationsPlugin.show(
+          id: 889,
+          title: 'Pomodoro Completed!',
+          body: 'Pomodoro $pomodoroLabel completed for "$taskTitle". Next session started!',
+          notificationDetails: const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'timer_completion',
+              'Timer Completion Alerts',
+              importance: Importance.high,
+              priority: Priority.high,
+              icon: 'launcher_icon',
+            ),
+          ),
+        );
+        
+        service.invoke('timerCompleted', {
+          'completedPomodoros': completedPomodoros,
+        });
+      }
 
       String m = (secondsLeft.abs() ~/ 60).toString().padLeft(2, '0');
       String s = (secondsLeft.abs() % 60).toString().padLeft(2, '0');
-      String timeString = isOvertime ? '-$m:$s' : '$m:$s';
+      String timeString = '$m:$s';
+
+      final pomodoroLabel = completedPomodoros == completedPomodoros.toInt()
+          ? completedPomodoros.toInt().toString()
+          : completedPomodoros.toStringAsFixed(1);
 
       flutterLocalNotificationsPlugin.show(
         id: 888,
-        title: isOvertime ? 'OVERTIME: $taskTitle' : 'Focus: $taskTitle',
-        body: isOvertime 
-            ? 'Time elapsed: $timeString | Pomodoros: $completedPomodoros/$estimatedPomodoros'
-            : 'Time left: $timeString | Pomodoros: $completedPomodoros/$estimatedPomodoros',
+        title: 'Focus: $taskTitle',
+        body: 'Time left: $timeString | Pomodoros: $pomodoroLabel/$estimatedPomodoros',
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             'timer_foreground',
@@ -128,42 +169,10 @@ void onStart(ServiceInstance service) async {
         'update',
         {
           "secondsLeft": secondsLeft,
-          "isOvertime": isOvertime,
-          "hasNotifiedCompletion": hasNotifiedCompletion,
+          "completedPomodoros": completedPomodoros,
+          "isOvertime": false,
         },
       );
-
-      if (secondsLeft <= 0 && !hasNotifiedCompletion) {
-        hasNotifiedCompletion = true;
-        // Trigger high priority notification for completion
-        const AndroidNotificationChannel completionChannel = AndroidNotificationChannel(
-          'timer_completion',
-          'Timer Completion Alerts',
-          importance: Importance.high,
-        );
-
-        await flutterLocalNotificationsPlugin
-            .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin>()
-            ?.createNotificationChannel(completionChannel);
-
-        flutterLocalNotificationsPlugin.show(
-          id: 889,
-          title: 'Pomodoro Completed!',
-          body: 'Timer reached 00:00 for "$taskTitle". Tap to continue or stop.',
-          notificationDetails: const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'timer_completion',
-              'Timer Completion Alerts',
-              importance: Importance.high,
-              priority: Priority.high,
-              icon: 'launcher_icon',
-            ),
-          ),
-        );
-        
-        service.invoke('timerCompleted');
-      }
     });
   });
 

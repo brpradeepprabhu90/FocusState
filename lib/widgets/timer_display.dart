@@ -93,7 +93,7 @@ class TimerDisplay extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: 4.0),
                         child: Text(
-                          'Pomodoros: ${activeTask!.completedPomodoros} / ${activeTask!.estimatedPomodoros}',
+                          'Pomodoros: ${activeTask!.formattedCompletedPomodoros} / ${activeTask!.estimatedPomodoros}',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,

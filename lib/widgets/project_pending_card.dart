@@ -75,7 +75,7 @@ class ProjectPendingCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     const Icon(Icons.format_list_numbered, size: 12, color: Colors.indigo),
                     const SizedBox(width: 4),
-                    Text('${t.completedPomodoros}/${t.estimatedPomodoros}', style: const TextStyle(fontSize: 12)),
+                    Text('${t.formattedCompletedPomodoros}/${t.estimatedPomodoros}', style: const TextStyle(fontSize: 12)),
                     if (t.interruptedPomodoros > 0) ...[
                       const SizedBox(width: 8),
                       const Icon(Icons.warning_amber_rounded, size: 12, color: AppConstants.warningAmber),

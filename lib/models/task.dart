@@ -11,7 +11,7 @@ class Task {
   DateTime? completedAt;
   int timeSpentSeconds;
   final int estimatedPomodoros;
-  int completedPomodoros;
+  double completedPomodoros;
   int interruptedPomodoros;
 
   Task({
@@ -27,9 +27,24 @@ class Task {
     this.completedAt,
     this.timeSpentSeconds = 0,
     this.estimatedPomodoros = 1,
-    this.completedPomodoros = 0,
+    this.completedPomodoros = 0.0,
     this.interruptedPomodoros = 0,
   });
+
+  String get formattedCompletedPomodoros {
+    final val = double.parse(completedPomodoros.toStringAsFixed(2));
+    if (val == val.toInt().toDouble()) {
+      return val.toInt().toString();
+    }
+    return val.toString().replaceAll(RegExp(r'0+$'), '');
+  }
+
+  void updateCalculatedPomodoros() {
+    if (durationMinutes > 0) {
+      final computed = timeSpentSeconds / (durationMinutes * 60);
+      completedPomodoros = double.parse(computed.toStringAsFixed(2));
+    }
+  }
 
   factory Task.fromJson(Map<String, dynamic> json) {
     return Task(
@@ -45,7 +60,7 @@ class Task {
       completedAt: json['completedAt'] != null ? DateTime.parse(json['completedAt']) : null,
       timeSpentSeconds: json['timeSpentSeconds'] ?? 0,
       estimatedPomodoros: json['estimatedPomodoros'] ?? 1,
-      completedPomodoros: json['completedPomodoros'] ?? 0,
+      completedPomodoros: (json['completedPomodoros'] as num?)?.toDouble() ?? 0.0,
       interruptedPomodoros: json['interruptedPomodoros'] ?? 0,
     );
   }

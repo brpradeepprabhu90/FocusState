@@ -3,24 +3,34 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 import '../models/app_info.dart';
 import '../constants/app_constants.dart';
+import 'storage_service.dart';
 
 class AppBlockerService {
   static const _channel = MethodChannel(AppConstants.blockerMethodChannel);
+  final StorageService _storageService = StorageService();
 
   Future<List<AppInfo>> loadInstalledApps() async {
     try {
+      final savedStates = await _storageService.loadBlockedAppStates();
       final List<dynamic>? apps = await _channel.invokeMethod('getInstalledApps');
       if (apps != null && apps.isNotEmpty) {
         return apps.map((app) {
           final String pkg = app['packageName'] as String;
           final String name = app['name'] as String;
           
-          final defaultApp = AppConstants.defaultAppsToBlock.where((a) => a.packageName == pkg).firstOrNull;
+          final bool isBlocked;
+          if (savedStates.containsKey(pkg)) {
+            isBlocked = savedStates[pkg]!;
+          } else {
+            final defaultApp = AppConstants.defaultAppsToBlock.where((a) => a.packageName == pkg).firstOrNull;
+            isBlocked = defaultApp != null ? defaultApp.isBlocked : true;
+          }
+
           return AppInfo(
             name: name,
             packageName: pkg,
             icon: Icons.android,
-            isBlocked: defaultApp != null ? defaultApp.isBlocked : true,
+            isBlocked: isBlocked,
           );
         }).toList();
       }

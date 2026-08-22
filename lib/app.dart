@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'constants/app_constants.dart';
 import 'views/home_screen.dart';
+import 'services/storage_service.dart';
 
 class FlowStateApp extends StatefulWidget {
   const FlowStateApp({Key? key}) : super(key: key);
@@ -11,11 +12,28 @@ class FlowStateApp extends StatefulWidget {
 
 class _FlowStateAppState extends State<FlowStateApp> {
   ThemeMode _themeMode = ThemeMode.dark;
+  final StorageService _storageService = StorageService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadThemeMode();
+  }
+
+  Future<void> _loadThemeMode() async {
+    final mode = await _storageService.loadThemeMode();
+    if (mounted) {
+      setState(() {
+        _themeMode = mode;
+      });
+    }
+  }
 
   void _updateThemeMode(ThemeMode mode) {
     setState(() {
       _themeMode = mode;
     });
+    _storageService.saveThemeMode(mode);
   }
 
   @override

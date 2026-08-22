@@ -83,7 +83,7 @@ class ExpandableCompletedCard extends StatelessWidget {
                   title: Text(t.title, style: const TextStyle(decoration: TextDecoration.lineThrough)),
                   subtitle: Row(
                     children: [
-                      Text('Pomodoros: ${t.completedPomodoros} / ${t.estimatedPomodoros}'),
+                      Text('Pomodoros: ${t.formattedCompletedPomodoros} / ${t.estimatedPomodoros}'),
                       if (t.interruptedPomodoros > 0) ...[
                         const SizedBox(width: 8),
                         const Icon(Icons.warning_amber_rounded, size: 12, color: AppConstants.warningAmber),
