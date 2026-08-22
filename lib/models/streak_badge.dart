@@ -35,6 +35,7 @@ class FocusBadge {
   final String emoji;
   final IconData icon;
   final bool isUnlocked;
+  final String category;
 
   FocusBadge({
     required this.id,
@@ -43,63 +44,84 @@ class FocusBadge {
     required this.emoji,
     required this.icon,
     this.isUnlocked = false,
+    this.category = 'General',
   });
 
-  static List<FocusBadge> getDefaultBadges({
+  static List<FocusBadge> generate500Badges({
     required int currentStreak,
+    required int longestStreak,
     required int totalTasksCompleted,
     required double totalFocusHours,
-    required bool hasSetGoal,
+    required double totalPomodorosCompleted,
+    required int activeDaysCount,
   }) {
-    return [
-      FocusBadge(
-        id: 'goal_setter',
-        title: 'Goal Setter',
-        description: 'Set your daily Pomodoro target',
-        emoji: '🎯',
-        icon: Icons.track_changes,
-        isUnlocked: hasSetGoal,
-      ),
-      FocusBadge(
-        id: 'first_flow',
-        title: 'First Flow',
-        description: 'Complete your first focus session',
-        emoji: '🚀',
-        icon: Icons.bolt,
-        isUnlocked: totalFocusHours > 0 || totalTasksCompleted > 0,
-      ),
-      FocusBadge(
-        id: 'streak_3',
-        title: '3-Day Streak',
-        description: 'Maintain a 3-day focus streak',
-        emoji: '🔥',
+    final List<FocusBadge> badges = [];
+
+    // Track 1: Streak Badges (100 Badges: 1 to 100 Days)
+    for (int i = 1; i <= 100; i++) {
+      badges.add(FocusBadge(
+        id: 'streak_$i',
+        title: '$i-Day Streak',
+        description: 'Maintain a $i-day focus streak',
+        emoji: i >= 30 ? '👑' : (i >= 10 ? '🏆' : '🔥'),
         icon: Icons.local_fire_department,
-        isUnlocked: currentStreak >= 3,
-      ),
-      FocusBadge(
-        id: 'streak_7',
-        title: '7-Day Streak',
-        description: 'Maintain a 7-day focus streak',
-        emoji: '🏆',
-        icon: Icons.emoji_events,
-        isUnlocked: currentStreak >= 7,
-      ),
-      FocusBadge(
-        id: 'hours_10',
-        title: '10 Hours Focus',
-        description: 'Log 10+ hours of deep focus',
-        emoji: '⏱️',
+        isUnlocked: currentStreak >= i || longestStreak >= i,
+        category: 'Streaks',
+      ));
+    }
+
+    // Track 2: Focus Hours Badges (100 Badges: 1 to 100 Hours)
+    for (int i = 1; i <= 100; i++) {
+      badges.add(FocusBadge(
+        id: 'hours_$i',
+        title: '$i Hr${i > 1 ? 's' : ''}',
+        description: 'Log $i+ hours of focus',
+        emoji: i >= 50 ? '💎' : '⏱️',
         icon: Icons.timer,
-        isUnlocked: totalFocusHours >= 10,
-      ),
-      FocusBadge(
-        id: 'task_master',
-        title: 'Task Champion',
-        description: 'Complete 10+ tasks',
-        emoji: '✅',
-        icon: Icons.verified,
-        isUnlocked: totalTasksCompleted >= 10,
-      ),
-    ];
+        isUnlocked: totalFocusHours >= i,
+        category: 'Hours',
+      ));
+    }
+
+    // Track 3: Pomodoro Session Badges (100 Badges: 1 to 100 Pomodoros)
+    for (int i = 1; i <= 100; i++) {
+      badges.add(FocusBadge(
+        id: 'pom_$i',
+        title: '$i Pom${i > 1 ? 's' : ''}',
+        description: 'Complete $i Pomodoro focus sessions',
+        emoji: i >= 50 ? '🌟' : '⚡',
+        icon: Icons.bolt,
+        isUnlocked: totalPomodorosCompleted >= i,
+        category: 'Pomodoros',
+      ));
+    }
+
+    // Track 4: Task Completion Badges (100 Badges: 1 to 100 Tasks)
+    for (int i = 1; i <= 100; i++) {
+      badges.add(FocusBadge(
+        id: 'task_$i',
+        title: '$i Task${i > 1 ? 's' : ''}',
+        description: 'Complete $i tasks',
+        emoji: i >= 50 ? '🏅' : '✅',
+        icon: Icons.check_circle,
+        isUnlocked: totalTasksCompleted >= i,
+        category: 'Tasks',
+      ));
+    }
+
+    // Track 5: Active Days Goal Badges (100 Badges: 1 to 100 Goal Days)
+    for (int i = 1; i <= 100; i++) {
+      badges.add(FocusBadge(
+        id: 'goal_day_$i',
+        title: '$i Goal Day${i > 1 ? 's' : ''}',
+        description: 'Achieve daily goal for $i days',
+        emoji: i >= 50 ? '🎖️' : '🎯',
+        icon: Icons.track_changes,
+        isUnlocked: activeDaysCount >= i,
+        category: 'Goals',
+      ));
+    }
+
+    return badges;
   }
 }

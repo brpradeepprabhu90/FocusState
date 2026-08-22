@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:table_calendar/table_calendar.dart';
 import '../constants/app_constants.dart';
 import '../models/task.dart';
 
@@ -19,27 +20,14 @@ class FocusCalendarWidget extends StatefulWidget {
 }
 
 class _FocusCalendarWidgetState extends State<FocusCalendarWidget> {
-  late DateTime _focusedMonth;
-  DateTime? _selectedDate;
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
 
   @override
   void initState() {
     super.initState();
-    final now = DateTime.now();
-    _focusedMonth = DateTime(now.year, now.month, 1);
-    _selectedDate = DateTime(now.year, now.month, now.day);
-  }
-
-  void _previousMonth() {
-    setState(() {
-      _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1, 1);
-    });
-  }
-
-  void _nextMonth() {
-    setState(() {
-      _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1, 1);
-    });
+    _selectedDay = DateTime.now();
   }
 
   String _formatDateKey(DateTime dt) {
@@ -49,173 +37,111 @@ class _FocusCalendarWidgetState extends State<FocusCalendarWidget> {
     return '$y-$m-$d';
   }
 
-  String _monthName(int month) {
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    return months[month - 1];
-  }
-
-  List<Task> _tasksForDate(DateTime dt) {
+  List<Task> _tasksForDay(DateTime day) {
     return widget.tasks.where((t) {
       if (t.completedAt == null) return false;
-      return t.completedAt!.year == dt.year &&
-          t.completedAt!.month == dt.month &&
-          t.completedAt!.day == dt.day;
+      return t.completedAt!.year == day.year &&
+          t.completedAt!.month == day.month &&
+          t.completedAt!.day == day.day;
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final daysInMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1, 0).day;
-    final firstWeekday = _focusedMonth.weekday % 7; // 0 for Sunday
-
-    final now = DateTime.now();
-    final todayKey = _formatDateKey(now);
-
-    final selectedDateKey = _selectedDate != null ? _formatDateKey(_selectedDate!) : null;
-    final selectedTasks = _selectedDate != null ? _tasksForDate(_selectedDate!) : <Task>[];
+    final selectedDayKey = _selectedDay != null ? _formatDateKey(_selectedDay!) : null;
+    final selectedTasks = _selectedDay != null ? _tasksForDay(_selectedDay!) : <Task>[];
     final selectedPomodoros = selectedTasks.fold<double>(0.0, (sum, t) => sum + t.completedPomodoros);
     final selectedMinutes = selectedTasks.fold<int>(0, (sum, t) => sum + (t.timeSpentSeconds ~/ 60));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Month Navigation Header
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             color: isDark ? AppConstants.darkSurface : AppConstants.lightSurface,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: _previousMonth,
-              ),
-              Text(
-                '${_monthName(_focusedMonth.month)} ${_focusedMonth.year}',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: _nextMonth,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        // Weekday Headers
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: const ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-              .map((day) => Expanded(
-                    child: Center(
-                      child: Text(
-                        day,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey),
-                      ),
-                    ),
-                  ))
-              .toList(),
-        ),
-        const SizedBox(height: 8),
-
-        // Days Grid
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: daysInMonth + firstWeekday,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7,
-            mainAxisSpacing: 6,
-            crossAxisSpacing: 6,
-          ),
-          itemBuilder: (context, index) {
-            if (index < firstWeekday) {
-              return const SizedBox();
-            }
-
-            final dayNumber = index - firstWeekday + 1;
-            final cellDate = DateTime(_focusedMonth.year, _focusedMonth.month, dayNumber);
-            final dateKey = _formatDateKey(cellDate);
-
-            final isToday = dateKey == todayKey;
-            final isGoalMet = widget.activeGoalDates.contains(dateKey);
-            final isSelected = dateKey == selectedDateKey;
-
-            final dayTasks = _tasksForDate(cellDate);
-            final hasActivity = dayTasks.isNotEmpty || isGoalMet;
-
-            Color bgColor = Colors.transparent;
-            Color borderColor = Colors.transparent;
-
-            if (isGoalMet) {
-              bgColor = AppConstants.accentEmerald.withValues(alpha: 0.2);
-              borderColor = AppConstants.accentEmerald;
-            } else if (hasActivity) {
-              bgColor = AppConstants.primaryIndigo.withValues(alpha: 0.15);
-              borderColor = AppConstants.primaryIndigo.withValues(alpha: 0.4);
-            }
-
-            if (isSelected) {
-              borderColor = AppConstants.warningAmber;
-            }
-
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedDate = cellDate;
-                });
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected ? AppConstants.warningAmber : (isToday ? AppConstants.primaryIndigo : borderColor),
-                    width: isSelected || isToday ? 2.0 : 1.0,
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '$dayNumber',
-                      style: TextStyle(
-                        fontWeight: isToday || isSelected ? FontWeight.bold : FontWeight.normal,
-                        fontSize: 13,
-                        color: isGoalMet ? AppConstants.accentEmerald : null,
-                      ),
-                    ),
-                    if (isGoalMet)
-                      const Icon(Icons.local_fire_department, size: 14, color: AppConstants.accentEmerald)
-                    else if (hasActivity)
-                      Container(
-                        margin: const EdgeInsets.only(top: 2),
-                        width: 4,
-                        height: 4,
-                        decoration: const BoxDecoration(
-                          color: AppConstants.primaryIndigo,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: isDark
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
                   ],
-                ),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+          child: TableCalendar(
+            firstDay: DateTime.utc(2024, 1, 1),
+            lastDay: DateTime.utc(2030, 12, 31),
+            focusedDay: _focusedDay,
+            calendarFormat: _calendarFormat,
+            selectedDayPredicate: (day) {
+              return isSameDay(_selectedDay, day);
+            },
+            onDaySelected: (selectedDay, focusedDay) {
+              setState(() {
+                _selectedDay = selectedDay;
+                _focusedDay = focusedDay;
+              });
+            },
+            onFormatChanged: (format) {
+              setState(() {
+                _calendarFormat = format;
+              });
+            },
+            onPageChanged: (focusedDay) {
+              _focusedDay = focusedDay;
+            },
+            calendarStyle: CalendarStyle(
+              todayDecoration: BoxDecoration(
+                color: AppConstants.primaryIndigo.withValues(alpha: 0.4),
+                shape: BoxShape.circle,
               ),
-            );
-          },
+              selectedDecoration: const BoxDecoration(
+                color: AppConstants.warningAmber,
+                shape: BoxShape.circle,
+              ),
+            ),
+            calendarBuilders: CalendarBuilders(
+              defaultBuilder: (context, day, focusedDay) {
+                final dateKey = _formatDateKey(day);
+                final isGoalMet = widget.activeGoalDates.contains(dateKey);
+
+                if (isGoalMet) {
+                  return Container(
+                    margin: const EdgeInsets.all(4),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppConstants.accentEmerald.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppConstants.accentEmerald, width: 1.5),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Text(
+                          '${day.day}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppConstants.accentEmerald),
+                        ),
+                        const Positioned(
+                          bottom: 2,
+                          child: Icon(Icons.local_fire_department, size: 10, color: AppConstants.accentEmerald),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return null;
+              },
+            ),
+          ),
         ),
         const SizedBox(height: 16),
 
-        // Selected Date Summary Box
-        if (_selectedDate != null) ...[
+        // Selected Day Details
+        if (_selectedDay != null) ...[
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -234,12 +160,12 @@ class _FocusCalendarWidgetState extends State<FocusCalendarWidget> {
                         const Icon(Icons.event, color: AppConstants.primaryIndigo, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          '${_monthName(_selectedDate!.month)} ${_selectedDate!.day}, ${_selectedDate!.year}',
+                          '${_selectedDay!.day}/${_selectedDay!.month}/${_selectedDay!.year}',
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                         ),
                       ],
                     ),
-                    if (widget.activeGoalDates.contains(selectedDateKey))
+                    if (widget.activeGoalDates.contains(selectedDayKey))
                       Chip(
                         avatar: const Icon(Icons.local_fire_department, size: 14, color: Colors.white),
                         label: const Text('Goal Met 🔥', style: TextStyle(fontSize: 11, color: Colors.white)),

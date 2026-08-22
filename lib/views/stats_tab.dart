@@ -9,6 +9,7 @@ import '../services/report_exporter_service.dart';
 import '../widgets/daily_goal_modal.dart';
 import '../widgets/focus_calendar_widget.dart';
 import '../widgets/streak_badge_card.dart';
+import '../widgets/stat_card.dart';
 
 class StatsProgressTab extends StatelessWidget {
   final List<Project> projects;
@@ -25,6 +26,16 @@ class StatsProgressTab extends StatelessWidget {
     required this.streakData,
     required this.onUpdateDailyGoal,
   }) : super(key: key);
+
+  String _formatDuration(int seconds) {
+    if (seconds <= 0) return '0m';
+    final hours = seconds ~/ 3600;
+    final mins = (seconds % 3600) ~/ 60;
+    if (hours > 0) {
+      return '${hours}h ${mins}m';
+    }
+    return '${mins}m';
+  }
 
   void _showSetGoalModal(BuildContext context) {
     showModalBottomSheet(
@@ -79,18 +90,36 @@ class StatsProgressTab extends StatelessWidget {
           t.completedAt!.day == now.day;
     }).fold<double>(0.0, (sum, t) => sum + t.completedPomodoros);
 
+    final todaySeconds = tasks.where((t) {
+      if (t.completedAt == null) return false;
+      return t.completedAt!.year == now.year &&
+          t.completedAt!.month == now.month &&
+          t.completedAt!.day == now.day;
+    }).fold<int>(0, (sum, t) => sum + t.timeSpentSeconds);
+
+    final startOfWeek = DateTime(now.year, now.month, now.day - (now.weekday - 1));
+    final weekSeconds = tasks.where((t) {
+      if (t.completedAt == null) return false;
+      return t.completedAt!.isAfter(startOfWeek.subtract(const Duration(seconds: 1)));
+    }).fold<int>(0, (sum, t) => sum + t.timeSpentSeconds);
+
+    final totalSeconds = tasks.fold<int>(0, (sum, t) => sum + t.timeSpentSeconds);
+
     final goalTarget = settings.dailyGoalPomodoros.toDouble();
     final goalProgress = goalTarget > 0 ? (todayPomodoros / goalTarget).clamp(0.0, 1.0) : 0.0;
     final isGoalAchieved = todayPomodoros >= goalTarget;
 
     final totalCompletedTasks = tasks.where((t) => t.isCompleted).length;
-    final totalFocusHours = tasks.fold<int>(0, (sum, t) => sum + t.timeSpentSeconds) / 3600.0;
+    final totalFocusHours = totalSeconds / 3600.0;
+    final totalPomodorosCompleted = tasks.fold<double>(0.0, (sum, t) => sum + t.completedPomodoros);
 
-    final badges = FocusBadge.getDefaultBadges(
+    final badges = FocusBadge.generate500Badges(
       currentStreak: streakData.currentStreak,
+      longestStreak: streakData.longestStreak,
       totalTasksCompleted: totalCompletedTasks,
       totalFocusHours: totalFocusHours,
-      hasSetGoal: settings.dailyGoalPomodoros > 0,
+      totalPomodorosCompleted: totalPomodorosCompleted,
+      activeDaysCount: streakData.activeDates.length,
     );
 
     return SingleChildScrollView(
@@ -142,6 +171,39 @@ class StatsProgressTab extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           const Text('Track daily goals, streaks, and milestone achievements', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 20),
+
+          // Focus Time Breakdown Cards (Today, This Week, Total)
+          Row(
+            children: [
+              Expanded(
+                child: StatCard(
+                  title: 'Focus Today',
+                  value: _formatDuration(todaySeconds),
+                  icon: Icons.today,
+                  color: AppConstants.accentEmerald,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: StatCard(
+                  title: 'This Week',
+                  value: _formatDuration(weekSeconds),
+                  icon: Icons.date_range,
+                  color: AppConstants.primaryIndigo,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: StatCard(
+                  title: 'Total Focus',
+                  value: _formatDuration(totalSeconds),
+                  icon: Icons.all_inclusive,
+                  color: AppConstants.warningAmber,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 20),
 
           // Daily Goal Progress Card
