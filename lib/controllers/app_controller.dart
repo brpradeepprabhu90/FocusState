@@ -115,6 +115,8 @@ class AppController extends ChangeNotifier {
     settings.energyLevel = level;
     if (level == 'Low') {
       settings.dailyGoalPomodoros = 2; // Calibrate expectations for low energy / burnout days
+    } else if (level == 'Moderate') {
+      settings.dailyGoalPomodoros = 3;
     } else if (level == 'High') {
       settings.dailyGoalPomodoros = 5;
     }
