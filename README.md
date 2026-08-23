@@ -13,6 +13,13 @@ FlowState is a high-performance productivity and focus application built with Fl
 - **Intelligent App Blocker (Android Only)**: Leverage native Android Accessibility Services to forcefully block distracting applications (like social media or games) during active focus sessions.
 - **Multi-Platform Support**: Enjoy a seamless timer experience on both Mobile (Android/iOS) and Desktop (Linux/macOS/Windows) with platform-aware background process handling.
 
+- **Neurodivergent & ADHD-Friendly Design**: Includes specialized features designed to support neurodivergent workflows:
+  - **Hyperfocus Extension Mode**: Seamlessly extends timers when you're in the zone to prevent disruptive interruptions.
+  - **Spoon Theory Energy Calibration**: Tailor daily goals and tasks to match your available energy levels.
+  - **Living Focus Garden**: Visually track progress via a fluid, low-pressure growing garden instead of rigid numerical streaks.
+  - **Shame-Free Rest Days**: Take breaks without guilt or the fear of breaking consecutive streaks.
+  - **Mindful Friction Intercepts**: Gently intercepts impulse-driven behavior to prevent falling down distraction rabbit holes.
+
 ## Architecture
 
 - Written in Dart using the **Flutter** framework.
