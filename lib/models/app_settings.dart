@@ -11,7 +11,7 @@ class AppSettings {
     this.defaultAppBlockerEnabled = true,
     this.hapticFeedbackEnabled = true,
     this.notificationsEnabled = true,
-    this.dailyGoalPomodoros = 4,
+    this.dailyGoalPomodoros = 3,
     this.energyLevel = 'Moderate',
   });
 
@@ -21,7 +21,7 @@ class AppSettings {
       defaultAppBlockerEnabled: json['defaultAppBlockerEnabled'] ?? true,
       hapticFeedbackEnabled: json['hapticFeedbackEnabled'] ?? true,
       notificationsEnabled: json['notificationsEnabled'] ?? true,
-      dailyGoalPomodoros: json['dailyGoalPomodoros'] ?? 4,
+      dailyGoalPomodoros: json['dailyGoalPomodoros'] ?? 3,
       energyLevel: json['energyLevel'] ?? 'Moderate',
     );
   }
