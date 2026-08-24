@@ -46,6 +46,7 @@ class StatsProgressTab extends StatelessWidget {
       ),
       builder: (ctx) => DailyGoalModal(
         currentGoalPomodoros: settings.dailyGoalPomodoros,
+        defaultPomodoroMinutes: settings.defaultPomodoroMinutes,
         onSaveGoal: onUpdateDailyGoal,
       ),
     );
@@ -238,7 +239,7 @@ class StatsProgressTab extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        'Target: ${settings.dailyGoalPomodoros} Sessions (${settings.dailyGoalPomodoros * 25}m)',
+                        'Target: ${settings.dailyGoalPomodoros} Sessions (${settings.dailyGoalPomodoros * settings.defaultPomodoroMinutes}m)',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 12,

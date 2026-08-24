@@ -19,6 +19,8 @@ class AudioService {
       } catch (e) {
         debugPrint('Error playing sound: $e');
       }
+    } else {
+      await stopAmbientSound();
     }
   }
 

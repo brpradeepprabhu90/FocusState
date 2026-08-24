@@ -3,11 +3,13 @@ import '../constants/app_constants.dart';
 
 class DailyGoalModal extends StatefulWidget {
   final int currentGoalPomodoros;
+  final int defaultPomodoroMinutes;
   final ValueChanged<int> onSaveGoal;
 
   const DailyGoalModal({
     Key? key,
     required this.currentGoalPomodoros,
+    required this.defaultPomodoroMinutes,
     required this.onSaveGoal,
   }) : super(key: key);
 
@@ -57,9 +59,9 @@ class _DailyGoalModalState extends State<DailyGoalModal> {
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Choose how many Focus Sessions (25m each) you want to complete each day to nurture your garden.',
-            style: TextStyle(fontSize: 13, color: Colors.grey),
+          Text(
+            'Choose how many Focus Sessions (${widget.defaultPomodoroMinutes}m each) you want to complete each day to nurture your garden.',
+            style: const TextStyle(fontSize: 13, color: Colors.grey),
           ),
           const SizedBox(height: 20),
 
@@ -73,7 +75,7 @@ class _DailyGoalModalState extends State<DailyGoalModal> {
             items: List.generate(12, (index) => index + 1)
                 .map((count) => DropdownMenuItem(
                       value: count,
-                      child: Text('$count Focus Session${count > 1 ? 's' : ''} (${count * 25} minutes)'),
+                      child: Text('$count Focus Session${count > 1 ? 's' : ''} (${count * widget.defaultPomodoroMinutes} minutes)'),
                     ))
                 .toList(),
             onChanged: (val) {
