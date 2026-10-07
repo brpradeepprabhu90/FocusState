@@ -104,6 +104,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             },
             onAddTask: _controller.addNewTask,
             onUpdateTask: _controller.updateTask,
+            onDeleteTask: _controller.deleteTask,
             onAddProject: _controller.addNewProject,
             onUpdateProject: _controller.updateProject,
             onDeleteProject: _controller.deleteProject,

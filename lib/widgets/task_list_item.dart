@@ -11,6 +11,7 @@ class TaskListItem extends StatelessWidget {
   final ValueChanged<Task> onCompleteTaskDirectly;
   final ValueChanged<Task> onToggleTaskTimer;
   final ValueChanged<Task>? onEditTask;
+  final ValueChanged<Task>? onDeleteTask;
 
   const TaskListItem({
     super.key,
@@ -21,6 +22,7 @@ class TaskListItem extends StatelessWidget {
     required this.onCompleteTaskDirectly,
     required this.onToggleTaskTimer,
     this.onEditTask,
+    this.onDeleteTask,
   });
 
   @override
@@ -127,6 +129,12 @@ class TaskListItem extends StatelessWidget {
                 icon: const Icon(Icons.edit_note, size: 24, color: AppConstants.accentIndigoSoft),
                 tooltip: 'Edit Task',
                 onPressed: () => onEditTask!(task),
+              ),
+            if (onDeleteTask != null)
+              IconButton(
+                icon: const Icon(Icons.delete_outline, size: 24, color: Colors.red),
+                tooltip: 'Delete Task',
+                onPressed: () => onDeleteTask!(task),
               ),
             IconButton(
               iconSize: 36,

@@ -192,6 +192,16 @@ class AppController extends ChangeNotifier {
     }
   }
 
+  void deleteTask(Task task) {
+    tasks.removeWhere((t) => t.id == task.id);
+    if (activeTask?.id == task.id) {
+      activeTask = null;
+      isTimerRunning = false;
+    }
+    saveTasks();
+    notifyListeners();
+  }
+
   void addNewProject(Project newProject) {
     projects.add(newProject);
     saveProjects();

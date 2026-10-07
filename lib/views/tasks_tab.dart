@@ -19,6 +19,7 @@ class TasksAndRemindersTab extends StatefulWidget {
   final Function(Task) onCompleteTaskDirectly;
   final Function(Task) onAddTask;
   final Function(Task)? onUpdateTask;
+  final Function(Task)? onDeleteTask;
   final Function(Project) onAddProject;
   final Function(Project)? onUpdateProject;
   final Function(String)? onDeleteProject;
@@ -34,6 +35,7 @@ class TasksAndRemindersTab extends StatefulWidget {
     required this.onCompleteTaskDirectly,
     required this.onAddTask,
     this.onUpdateTask,
+    this.onDeleteTask,
     required this.onAddProject,
     this.onUpdateProject,
     this.onDeleteProject,
@@ -87,6 +89,32 @@ class _TasksAndRemindersTabState extends State<TasksAndRemindersTab> {
                 setState(() {
                   _selectedProjectId = null;
                 });
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteTask(BuildContext context, Task task) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Task'),
+        content: Text('Are you sure you want to delete "${task.title}"? This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(ctx);
+              if (widget.onDeleteTask != null) {
+                widget.onDeleteTask!(task);
               }
             },
             child: const Text('Delete', style: TextStyle(color: Colors.white)),
@@ -273,6 +301,7 @@ class _TasksAndRemindersTabState extends State<TasksAndRemindersTab> {
                     onCompleteTaskDirectly: widget.onCompleteTaskDirectly,
                     onToggleTaskTimer: widget.onToggleTaskTimer,
                     onEditTask: (t) => _showEditTaskBottomSheet(context, t),
+                    onDeleteTask: (t) => _confirmDeleteTask(context, t),
                   );
                 },
               ),
