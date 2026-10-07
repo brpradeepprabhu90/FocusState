@@ -9,13 +9,13 @@ class AmbientSoundSelector extends StatelessWidget {
   final VoidCallback onToggleMute;
 
   const AmbientSoundSelector({
-    Key? key,
+    super.key,
     required this.selectedSound,
     required this.soundVolume,
     required this.onSoundSelected,
     required this.onVolumeChanged,
     required this.onToggleMute,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,14 +28,14 @@ class AmbientSoundSelector extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: selectedSound != 'None'
-              ? AppConstants.primaryIndigo.withOpacity(0.5)
+              ? AppConstants.primaryIndigo.withValues(alpha: 0.5)
               : Colors.transparent,
         ),
         boxShadow: isDark
             ? []
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 )
@@ -76,7 +76,7 @@ class AmbientSoundSelector extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: isDark ? Colors.black26 : Colors.black.withOpacity(0.03),
+                color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.03),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(

@@ -25,7 +25,7 @@ class TasksAndRemindersTab extends StatefulWidget {
   final VoidCallback? onQuickStartFocus;
 
   const TasksAndRemindersTab({
-    Key? key,
+    super.key,
     required this.projects,
     required this.tasks,
     required this.activeTask,
@@ -38,7 +38,7 @@ class TasksAndRemindersTab extends StatefulWidget {
     this.onUpdateProject,
     this.onDeleteProject,
     this.onQuickStartFocus,
-  }) : super(key: key);
+  });
 
   @override
   State<TasksAndRemindersTab> createState() => _TasksAndRemindersTabState();

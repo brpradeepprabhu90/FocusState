@@ -4,7 +4,7 @@ class AppSettings {
   bool hapticFeedbackEnabled;
   bool notificationsEnabled;
   int dailyGoalPomodoros;
-  String energyLevel; // 'High', 'Moderate', 'Low'
+
 
   AppSettings({
     this.defaultPomodoroMinutes = 25,
@@ -12,7 +12,6 @@ class AppSettings {
     this.hapticFeedbackEnabled = true,
     this.notificationsEnabled = true,
     this.dailyGoalPomodoros = 3,
-    this.energyLevel = 'Moderate',
   });
 
   factory AppSettings.fromJson(Map<String, dynamic> json) {
@@ -22,7 +21,6 @@ class AppSettings {
       hapticFeedbackEnabled: json['hapticFeedbackEnabled'] ?? true,
       notificationsEnabled: json['notificationsEnabled'] ?? true,
       dailyGoalPomodoros: json['dailyGoalPomodoros'] ?? 3,
-      energyLevel: json['energyLevel'] ?? 'Moderate',
     );
   }
 
@@ -33,7 +31,6 @@ class AppSettings {
       'hapticFeedbackEnabled': hapticFeedbackEnabled,
       'notificationsEnabled': notificationsEnabled,
       'dailyGoalPomodoros': dailyGoalPomodoros,
-      'energyLevel': energyLevel,
     };
   }
 }

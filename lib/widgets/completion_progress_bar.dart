@@ -5,9 +5,9 @@ class CompletionProgressBar extends StatelessWidget {
   final double completionRatio;
 
   const CompletionProgressBar({
-    Key? key,
+    super.key,
     required this.completionRatio,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +22,7 @@ class CompletionProgressBar extends StatelessWidget {
             ? []
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 )

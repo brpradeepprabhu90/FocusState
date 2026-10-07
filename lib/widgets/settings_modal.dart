@@ -15,13 +15,13 @@ class SettingsModal extends StatefulWidget {
   final Function(AppSettings) onSaveSettings;
 
   const SettingsModal({
-    Key? key,
+    super.key,
     required this.settings,
     required this.currentThemeMode,
     required this.onThemeChanged,
     required this.onRequestBackgroundUsage,
     required this.onSaveSettings,
-  }) : super(key: key);
+  });
 
   @override
   State<SettingsModal> createState() => _SettingsModalState();
@@ -237,7 +237,7 @@ class _SettingsModalState extends State<SettingsModal> {
             title: const Text('App Blocker Enabled by Default'),
             subtitle: const Text('Automatically block distracting apps on timer start'),
             value: _blockerDefault,
-            activeColor: const Color(0xFF6366F1),
+            activeThumbColor: const Color(0xFF6366F1),
             onChanged: (val) {
               setState(() {
                 _blockerDefault = val;
@@ -249,7 +249,7 @@ class _SettingsModalState extends State<SettingsModal> {
             title: const Text('Haptic Feedback (Vibration)'),
             subtitle: const Text('Vibrate when a timer completes'),
             value: _hapticEnabled,
-            activeColor: const Color(0xFF6366F1),
+            activeThumbColor: const Color(0xFF6366F1),
             onChanged: (val) {
               setState(() {
                 _hapticEnabled = val;
@@ -261,7 +261,7 @@ class _SettingsModalState extends State<SettingsModal> {
             title: const Text('Notifications'),
             subtitle: const Text('Show alerts when tasks complete or exceed'),
             value: _notificationsEnabled,
-            activeColor: const Color(0xFF6366F1),
+            activeThumbColor: const Color(0xFF6366F1),
             onChanged: (val) {
               setState(() {
                 _notificationsEnabled = val;

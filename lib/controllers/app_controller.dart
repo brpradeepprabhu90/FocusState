@@ -111,20 +111,6 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateEnergyLevel(String level) {
-    settings.energyLevel = level;
-    if (level == 'Low') {
-      settings.dailyGoalPomodoros = 2; // Calibrate expectations for low energy / burnout days
-    } else if (level == 'Moderate') {
-      settings.dailyGoalPomodoros = 3;
-    } else if (level == 'High') {
-      settings.dailyGoalPomodoros = 5;
-    }
-    saveSettings();
-    recalculateStreak();
-    notifyListeners();
-  }
-
   Future<void> saveTasks() async {
     await _storageService.saveTasks(tasks);
     recalculateStreak();

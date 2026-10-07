@@ -8,11 +8,11 @@ class QuickFocusWidget extends StatelessWidget {
   final VoidCallback onQuickStartFocus;
 
   const QuickFocusWidget({
-    Key? key,
+    super.key,
     required this.activeTask,
     required this.isTimerRunning,
     required this.onQuickStartFocus,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

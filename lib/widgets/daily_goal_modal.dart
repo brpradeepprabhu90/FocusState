@@ -7,11 +7,11 @@ class DailyGoalModal extends StatefulWidget {
   final ValueChanged<int> onSaveGoal;
 
   const DailyGoalModal({
-    Key? key,
+    super.key,
     required this.currentGoalPomodoros,
     required this.defaultPomodoroMinutes,
     required this.onSaveGoal,
-  }) : super(key: key);
+  });
 
   @override
   State<DailyGoalModal> createState() => _DailyGoalModalState();
@@ -66,7 +66,7 @@ class _DailyGoalModalState extends State<DailyGoalModal> {
           const SizedBox(height: 20),
 
           DropdownButtonFormField<int>(
-            value: _selectedGoal,
+            initialValue: _selectedGoal,
             decoration: InputDecoration(
               labelText: 'Daily Goal Target',
               prefixIcon: const Icon(Icons.stars, color: Colors.amber),

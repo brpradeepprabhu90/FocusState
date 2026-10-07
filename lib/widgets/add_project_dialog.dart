@@ -8,11 +8,11 @@ class AddProjectDialog extends StatefulWidget {
   final Function(Project)? onUpdateProject;
 
   const AddProjectDialog({
-    Key? key,
+    super.key,
     this.project,
     required this.onAddProject,
     this.onUpdateProject,
-  }) : super(key: key);
+  });
 
   @override
   State<AddProjectDialog> createState() => _AddProjectDialogState();
@@ -88,7 +88,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
               spacing: 8,
               runSpacing: 8,
               children: _colorOptions.map((color) {
-                final isSelected = _selectedColor.value == color.value;
+                final isSelected = _selectedColor.toARGB32() == color.toARGB32();
                 return GestureDetector(
                   onTap: () {
                     setState(() {

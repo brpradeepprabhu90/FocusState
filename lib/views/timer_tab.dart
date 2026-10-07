@@ -30,7 +30,7 @@ class TimerTab extends StatefulWidget {
   final VoidCallback onSaveSettings;
 
   const TimerTab({
-    Key? key,
+    super.key,
     required this.activeTask,
     required this.isTimerRunning,
     required this.settings,
@@ -39,7 +39,7 @@ class TimerTab extends StatefulWidget {
     required this.onCompleteTask,
     required this.onSelectTaskPrompt,
     required this.onSaveSettings,
-  }) : super(key: key);
+  });
 
   @override
   State<TimerTab> createState() => _TimerTabState();
@@ -417,14 +417,18 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
 
   void _handleBlockAll() {
     setState(() {
-      for (var app in _appsToBlock) app.isBlocked = true;
+      for (var app in _appsToBlock) {
+        app.isBlocked = true;
+      }
     });
     _saveAppBlockerStates();
   }
 
   void _handleAllowAll() {
     setState(() {
-      for (var app in _appsToBlock) app.isBlocked = false;
+      for (var app in _appsToBlock) {
+        app.isBlocked = false;
+      }
     });
     _saveAppBlockerStates();
   }

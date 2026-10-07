@@ -19,13 +19,13 @@ class StatsProgressTab extends StatelessWidget {
   final ValueChanged<int> onUpdateDailyGoal;
 
   const StatsProgressTab({
-    Key? key,
+    super.key,
     required this.projects,
     required this.tasks,
     required this.settings,
     required this.streakData,
     required this.onUpdateDailyGoal,
-  }) : super(key: key);
+  });
 
   String _formatDuration(int seconds) {
     if (seconds <= 0) return '0m';
@@ -150,6 +150,12 @@ class StatsProgressTab extends StatelessWidget {
               ),
               Row(
                 children: [
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.download, size: 16),
+                    label: const Text('Export CSV'),
+                    onPressed: () => _exportCsvReport(context),
+                  ),
+                  const SizedBox(width: 8),
                   OutlinedButton.icon(
                     icon: const Icon(Icons.track_changes, size: 16),
                     label: const Text('Set Goal'),

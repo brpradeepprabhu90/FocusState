@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../constants/app_constants.dart';
 import '../widgets/settings_modal.dart';
 import 'tasks_tab.dart';
@@ -9,17 +8,15 @@ import '../controllers/app_controller.dart';
 
 import 'permission_onboarding_dialog.dart';
 
-import '../widgets/energy_selector_widget.dart';
-
 class MainHomeScreen extends StatefulWidget {
   final ThemeMode currentThemeMode;
   final Function(ThemeMode) onThemeChanged;
 
   const MainHomeScreen({
-    Key? key,
+    super.key,
     required this.currentThemeMode,
     required this.onThemeChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<MainHomeScreen> createState() => _MainHomeScreenState();
@@ -159,10 +156,6 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             ),
             elevation: 0,
             actions: [
-              EnergySelectorWidget(
-                currentEnergyLevel: _controller.settings.energyLevel,
-                onEnergyChanged: _controller.updateEnergyLevel,
-              ),
               IconButton(
                 icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode, color: Colors.amber),
                 tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
@@ -184,7 +177,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
           bottomNavigationBar: NavigationBar(
             selectedIndex: _controller.selectedTabIndex,
             onDestinationSelected: _controller.setTabIndex,
-            indicatorColor: AppConstants.primaryIndigo.withOpacity(0.3),
+            indicatorColor: AppConstants.primaryIndigo.withValues(alpha: 0.3),
             destinations: const [
               NavigationDestination(
                 icon: Icon(Icons.folder_outlined),

@@ -6,7 +6,7 @@ import '../constants/app_constants.dart';
 class PermissionOnboardingDialog extends StatefulWidget {
   final VoidCallback? onComplete;
 
-  const PermissionOnboardingDialog({Key? key, this.onComplete}) : super(key: key);
+  const PermissionOnboardingDialog({super.key, this.onComplete});
 
   static Future<void> showIfNeeded(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
@@ -103,7 +103,7 @@ class _PermissionOnboardingDialogState extends State<PermissionOnboardingDialog>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppConstants.primaryIndigo.withOpacity(0.2),
+                  color: AppConstants.primaryIndigo.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -224,13 +224,13 @@ class _PermissionOnboardingDialogState extends State<PermissionOnboardingDialog>
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isGranted
-            ? AppConstants.accentEmerald.withOpacity(0.1)
-            : Colors.amber.withOpacity(0.1),
+            ? AppConstants.accentEmerald.withValues(alpha: 0.1)
+            : Colors.amber.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isGranted
-              ? AppConstants.accentEmerald.withOpacity(0.4)
-              : Colors.amber.withOpacity(0.4),
+              ? AppConstants.accentEmerald.withValues(alpha: 0.4)
+              : Colors.amber.withValues(alpha: 0.4),
         ),
       ),
       child: Row(

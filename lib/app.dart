@@ -4,7 +4,7 @@ import 'views/home_screen.dart';
 import 'services/storage_service.dart';
 
 class FlowStateApp extends StatefulWidget {
-  const FlowStateApp({Key? key}) : super(key: key);
+  const FlowStateApp({super.key});
 
   @override
   State<FlowStateApp> createState() => _FlowStateAppState();

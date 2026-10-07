@@ -15,7 +15,6 @@ FlowState is a high-performance productivity and focus application built with Fl
 
 - **Neurodivergent & ADHD-Friendly Design**: Includes specialized features designed to support neurodivergent workflows:
   - **Hyperfocus Extension Mode**: Seamlessly extends timers when you're in the zone to prevent disruptive interruptions.
-  - **Spoon Theory Energy Calibration**: Tailor daily goals and tasks to match your available energy levels.
   - **Living Focus Garden**: Visually track progress via a fluid, low-pressure growing garden instead of rigid numerical streaks.
   - **Shame-Free Rest Days**: Take breaks without guilt or the fear of breaking consecutive streaks.
   - **Mindful Friction Intercepts**: Gently intercepts impulse-driven behavior to prevent falling down distraction rabbit holes.

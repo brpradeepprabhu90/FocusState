@@ -7,10 +7,10 @@ class StreakBadgeCard extends StatefulWidget {
   final List<FocusBadge> badges;
 
   const StreakBadgeCard({
-    Key? key,
+    super.key,
     required this.streakData,
     required this.badges,
-  }) : super(key: key);
+  });
 
   @override
   State<StreakBadgeCard> createState() => _StreakBadgeCardState();
@@ -22,7 +22,6 @@ class _StreakBadgeCardState extends State<StreakBadgeCard> {
   final List<String> _categories = [
     'All Earned',
     'Living Garden 🪴',
-    'Energy Trophies ⚡',
     'Mindful Flow 🧘',
     'Task Harvest 🌾',
     'Rest Sanctuary 🛋️',

@@ -11,13 +11,13 @@ class AddTaskModal extends StatefulWidget {
   final Function(Task)? onUpdateTask;
 
   const AddTaskModal({
-    Key? key,
+    super.key,
     required this.projects,
     this.initialProjectId,
     required this.onAddTask,
     this.taskToEdit,
     this.onUpdateTask,
-  }) : super(key: key);
+  });
 
   @override
   State<AddTaskModal> createState() => _AddTaskModalState();
@@ -91,7 +91,7 @@ class _AddTaskModalState extends State<AddTaskModal> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _selectedProjId.isNotEmpty ? _selectedProjId : null,
+            initialValue: _selectedProjId.isNotEmpty ? _selectedProjId : null,
             decoration: InputDecoration(
               labelText: 'Assigned Project',
               prefixIcon: const Icon(Icons.folder, color: AppConstants.accentIndigoSoft),
@@ -146,7 +146,7 @@ class _AddTaskModalState extends State<AddTaskModal> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: _repeatFrequency,
+            initialValue: _repeatFrequency,
             decoration: InputDecoration(
               labelText: 'Repeat Schedule',
               prefixIcon: const Icon(Icons.repeat, color: AppConstants.accentIndigoSoft),
@@ -170,7 +170,7 @@ class _AddTaskModalState extends State<AddTaskModal> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<int>(
-            value: _estimatedPomodoros,
+            initialValue: _estimatedPomodoros,
             decoration: InputDecoration(
               labelText: 'Estimated Pomodoros',
               prefixIcon: const Icon(Icons.format_list_numbered, color: AppConstants.accentIndigoSoft),
@@ -220,7 +220,7 @@ class _AddTaskModalState extends State<AddTaskModal> {
             title: const Text('Notification Alert'),
             subtitle: const Text('Trigger push notification when timer completes'),
             value: _enableNotification,
-            activeColor: AppConstants.primaryIndigo,
+            activeThumbColor: AppConstants.primaryIndigo,
             onChanged: (val) {
               setState(() {
                 _enableNotification = val;

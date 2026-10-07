@@ -15,7 +15,7 @@ class TimerDisplay extends StatelessWidget {
   final VoidCallback onStopTimer;
 
   const TimerDisplay({
-    Key? key,
+    super.key,
     required this.activeTask,
     required this.isTimerRunning,
     required this.settings,
@@ -25,7 +25,7 @@ class TimerDisplay extends StatelessWidget {
     required this.onPauseTimer,
     required this.onResumeTimer,
     required this.onStopTimer,
-  }) : super(key: key);
+  });
 
   String get _timeString {
     final absSeconds = secondsLeft.abs();
@@ -57,7 +57,7 @@ class TimerDisplay extends StatelessWidget {
                 ? []
                 : [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     )

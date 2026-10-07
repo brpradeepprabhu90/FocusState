@@ -18,7 +18,7 @@ class ReportExporterService {
       // Header Banner
       buffer.writeln('FLOWSTATE PRODUCTIVITY & FOCUS REPORT');
       buffer.writeln('Generated Date,${DateTime.now().toIso8601String()}');
-      buffer.writeln('Current Streak,${currentStreak} Days');
+      buffer.writeln('Current Streak,$currentStreak Days');
       buffer.writeln('Daily Focus Goal,$dailyGoalPomodoros Pomodoros');
       buffer.writeln();
 

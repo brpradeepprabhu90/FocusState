@@ -8,16 +8,16 @@ class ProjectFilterDropdown extends StatelessWidget {
   final ValueChanged<String?> onChanged;
 
   const ProjectFilterDropdown({
-    Key? key,
+    super.key,
     required this.projects,
     required this.selectedProjectId,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String?>(
-      value: selectedProjectId,
+      initialValue: selectedProjectId,
       decoration: InputDecoration(
         labelText: 'Filter by Project',
         prefixIcon: const Icon(Icons.filter_alt, color: AppConstants.primaryIndigo),
@@ -40,7 +40,7 @@ class ProjectFilterDropdown extends StatelessWidget {
               ],
             ),
           );
-        }).toList(),
+        }),
       ],
       onChanged: onChanged,
     );

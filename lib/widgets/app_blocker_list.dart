@@ -10,13 +10,13 @@ class AppBlockerList extends StatelessWidget {
   final VoidCallback onAllowAll;
 
   const AppBlockerList({
-    Key? key,
+    super.key,
     required this.appsToBlock,
     required this.isTimerRunning,
     required this.onAppToggled,
     required this.onBlockAll,
     required this.onAllowAll,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +27,7 @@ class AppBlockerList extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.apps_outage, size: 64, color: Colors.grey.withOpacity(0.5)),
+              Icon(Icons.apps_outage, size: 64, color: Colors.grey.withValues(alpha: 0.5)),
               const SizedBox(height: 16),
               const Text(
                 'App Blocking Not Available',
@@ -82,7 +82,7 @@ class AppBlockerList extends StatelessWidget {
                   backgroundColor: Colors.transparent,
                   child: Icon(app.icon, color: AppConstants.primaryIndigo),
                 ),
-                activeColor: AppConstants.errorRed,
+                activeThumbColor: AppConstants.errorRed,
                 onChanged: isTimerRunning
                     ? null
                     : (val) => onAppToggled(index),

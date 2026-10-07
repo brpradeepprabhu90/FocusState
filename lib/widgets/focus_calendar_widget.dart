@@ -9,11 +9,11 @@ class FocusCalendarWidget extends StatefulWidget {
   final int dailyGoalPomodoros;
 
   const FocusCalendarWidget({
-    Key? key,
+    super.key,
     required this.activeGoalDates,
     required this.tasks,
     required this.dailyGoalPomodoros,
-  }) : super(key: key);
+  });
 
   @override
   State<FocusCalendarWidget> createState() => _FocusCalendarWidgetState();

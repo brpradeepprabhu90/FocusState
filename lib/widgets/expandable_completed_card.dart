@@ -10,13 +10,13 @@ class ExpandableCompletedCard extends StatelessWidget {
   final List<Task> tasks;
 
   const ExpandableCompletedCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.groupIcon,
     required this.count,
     required this.color,
     required this.tasks,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,12 +26,12 @@ class ExpandableCompletedCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? AppConstants.darkSurface : AppConstants.lightSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
         boxShadow: isDark
             ? []
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 )
@@ -42,7 +42,7 @@ class ExpandableCompletedCard extends StatelessWidget {
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           leading: CircleAvatar(
-            backgroundColor: color.withOpacity(0.2),
+            backgroundColor: color.withValues(alpha: 0.2),
             child: Icon(groupIcon, color: color, size: 20),
           ),
           title: Row(
@@ -55,7 +55,7 @@ class ExpandableCompletedCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
+                  color: color.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(

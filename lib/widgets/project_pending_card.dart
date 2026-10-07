@@ -8,10 +8,10 @@ class ProjectPendingCard extends StatelessWidget {
   final List<Task> pendingTasks;
 
   const ProjectPendingCard({
-    Key? key,
+    super.key,
     required this.project,
     required this.pendingTasks,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +26,7 @@ class ProjectPendingCard extends StatelessWidget {
             ? []
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 )
@@ -38,7 +38,7 @@ class ProjectPendingCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: project.color.withOpacity(0.15),
+              color: project.color.withValues(alpha: 0.15),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Row(

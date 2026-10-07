@@ -13,7 +13,7 @@ class TaskListItem extends StatelessWidget {
   final ValueChanged<Task>? onEditTask;
 
   const TaskListItem({
-    Key? key,
+    super.key,
     required this.task,
     required this.project,
     required this.isCurrentActive,
@@ -21,7 +21,7 @@ class TaskListItem extends StatelessWidget {
     required this.onCompleteTaskDirectly,
     required this.onToggleTaskTimer,
     this.onEditTask,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,14 +31,14 @@ class TaskListItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: isCurrentActive
-            ? AppConstants.primaryIndigo.withOpacity(0.15)
+            ? AppConstants.primaryIndigo.withValues(alpha: 0.15)
             : (isDark ? AppConstants.darkSurface : AppConstants.lightSurface),
         borderRadius: BorderRadius.circular(16),
         boxShadow: isDark
             ? []
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 )
@@ -75,7 +75,7 @@ class TaskListItem extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: project.color.withOpacity(0.2),
+                  color: project.color.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(

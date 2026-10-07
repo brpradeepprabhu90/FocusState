@@ -58,7 +58,7 @@ class FocusBadge {
     final List<FocusBadge> badges = [];
 
     final gardenEmojis = ['🌱', '🌿', '☘️', '🍀', '🌸', '🌺', '🌻', '🌹', '🌷', '🌲', '🌳', '🌴', '🌵', '🌾', '🪷'];
-    final energyEmojis = ['🕯️', '🔋', '⚡', '🌟', '💎', '🔮', '✨', '🏆', '👑', '🎖️'];
+
     final flowEmojis = ['🧘', '🌊', '🌬️', '🧘‍♂️', '🌈', '🕊️', '☁️', '🌙', '⭐', '☀️'];
     final harvestEmojis = ['🍎', '🍊', '🍇', '🍓', '🍒', '🍑', '🍐', '🫐', '🌾', '🏆'];
     final sanctuaryEmojis = ['🛋️', '🛌', '☕', '🍵', '🕯️', '🌙', '🛋️', '💆', '🧖', '✨'];
@@ -84,19 +84,7 @@ class FocusBadge {
       ));
     }
 
-    // Category 2: Spoon Theory Energy Trophies (100 Energy Badges)
-    for (int i = 1; i <= 100; i++) {
-      final emoji = energyEmojis[(i - 1) % energyEmojis.length];
-      badges.add(FocusBadge(
-        id: 'energy_$i',
-        title: '$i Hr Energy',
-        description: 'Preserved energy & logged $i+ focus hours',
-        emoji: emoji,
-        icon: Icons.bolt,
-        isUnlocked: totalFocusHours >= i,
-        category: 'Energy Trophies ⚡',
-      ));
-    }
+
 
     // Category 3: Mindful Flow Milestones (100 Flow Badges)
     for (int i = 1; i <= 100; i++) {
