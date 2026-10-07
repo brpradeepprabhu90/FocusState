@@ -107,7 +107,8 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
             widget.activeTask!.updateCalculatedPomodoros();
           }
         }
-        _triggerCompletionNotification();
+        // Pomodoro completed, timer automatically restarts for next pomodoro.
+        // We do NOT call _triggerCompletionNotification() here, as it would mark the task done.
       });
     }
 
@@ -340,14 +341,14 @@ class _TimerTabState extends State<TimerTab> with WidgetsBindingObserver {
               widget.activeTask!.timeSpentSeconds++;
               widget.activeTask!.updateCalculatedPomodoros();
             }
-            if (_secondsLeft <= 0) {
-              final sessionMins = widget.activeTask?.durationMinutes ?? widget.settings.defaultPomodoroMinutes;
-              _secondsLeft = sessionMins * 60;
-              if (widget.settings.hapticFeedbackEnabled) {
-                HapticFeedback.heavyImpact();
+              if (_secondsLeft <= 0) {
+                final sessionMins = widget.activeTask?.durationMinutes ?? widget.settings.defaultPomodoroMinutes;
+                _secondsLeft = sessionMins * 60;
+                if (widget.settings.hapticFeedbackEnabled) {
+                  HapticFeedback.heavyImpact();
+                }
+                // Pomodoro completed, timer continues for next pomodoro.
               }
-              _triggerCompletionNotification();
-            }
           });
           _saveTimerState();
         }
