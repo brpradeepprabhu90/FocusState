@@ -19,8 +19,9 @@ void main() {
       final task = Task(
         id: '1',
         title: 'Valid Task Title',
-        estimatedPomodoros: 2, projectId: '1', durationMinutes: 25,
+        estimatedPomodoros: 2,
         projectId: 'project-1',
+        durationMinutes: 25,
       );
 
       controller.addNewTask(task);
@@ -34,7 +35,9 @@ void main() {
       final task = Task(
         id: '2',
         title: 'Task To Complete',
-        estimatedPomodoros: 1, projectId: '1', durationMinutes: 25,
+        estimatedPomodoros: 1,
+        projectId: 'project-1',
+        durationMinutes: 25,
       );
       controller.addNewTask(task);
 
@@ -45,10 +48,22 @@ void main() {
     });
 
     test('TC-TM-03 [Edit Task] Positive Scenario', () {
-      final task = Task(id: '3', title: 'Old Title', estimatedPomodoros: 1);
+      final task = Task(
+        id: '3', 
+        title: 'Old Title', 
+        estimatedPomodoros: 1,
+        projectId: 'project-1',
+        durationMinutes: 25,
+      );
       controller.addNewTask(task);
 
-      final updatedTask = Task(id: '3', title: 'New Title', estimatedPomodoros: 5, projectId: '1', durationMinutes: 25);
+      final updatedTask = Task(
+        id: '3', 
+        title: 'New Title', 
+        estimatedPomodoros: 5,
+        projectId: 'project-1',
+        durationMinutes: 25,
+      );
       controller.updateTask(updatedTask);
 
       expect(controller.tasks.first.title, 'New Title');
@@ -56,7 +71,13 @@ void main() {
     });
 
     test('TC-PT-01 & 02 [Start/Pause Timer] Positive Scenario', () {
-      final task = Task(id: '4', title: 'Focus Task', estimatedPomodoros: 1);
+      final task = Task(
+        id: '4', 
+        title: 'Focus Task', 
+        estimatedPomodoros: 1,
+        projectId: 'project-1',
+        durationMinutes: 25,
+      );
       controller.addNewTask(task);
 
       controller.toggleTaskTimer(controller.tasks.first);
@@ -75,11 +96,13 @@ void main() {
       final task = Task(
         id: '5',
         title: 'Invalid Estimate Task',
-        estimatedPomodoros: -1, projectId: '1', durationMinutes: 25, // Invalid
+        estimatedPomodoros: -1, // Invalid
+        projectId: 'project-1',
+        durationMinutes: 25,
       );
       
       // We expect the app controller to still add it because validation is done in UI, 
-      // but let's verify it gets added. If we wanted, we could enforce logic here.
+      // but let's verify it gets added.
       controller.addNewTask(task);
       expect(controller.tasks.length, 1);
       expect(controller.tasks.first.estimatedPomodoros, -1);
